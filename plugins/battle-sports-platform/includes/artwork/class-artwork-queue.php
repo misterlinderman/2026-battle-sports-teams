@@ -217,7 +217,7 @@ final class ArtworkQueue {
 		}
 
 		$this->log_status_change($id, $from_status, $new_status, $user_id, $notes);
-		$this->trigger_make_webhook($id, $new_status);
+		$this->trigger_webhook_for_status($id, $new_status);
 
 		return true;
 	}
@@ -229,14 +229,9 @@ final class ArtworkQueue {
 	 * @param string $new_status New status.
 	 * @return void
 	 */
-	private function trigger_make_webhook(int $artwork_id, string $new_status): void {
+	private function trigger_webhook_for_status(int $artwork_id, string $new_status): void {
 		$row = $this->get_by_id($artwork_id);
 		if (!$row) {
-			return;
-		}
-
-		$webhook_url = get_option('bsp_make_webhook_url', '');
-		if ($webhook_url === '') {
 			return;
 		}
 
@@ -246,30 +241,21 @@ final class ArtworkQueue {
 			$designer_name = $designer ? $designer->display_name : '';
 		}
 
-		$payload = [
-			'event'             => 'artwork_status_changed',
-			'artwork_id'        => $artwork_id,
-			'order_ref'         => $row->order_ref,
-			'new_status'        => $new_status,
-			'team_name'         => $row->team_name ?? '',
-			'assigned_designer' => $designer_name,
-			'timestamp'         => gmdate('c'),
+		$data = [
+			'artwork_id'         => $artwork_id,
+			'order_ref'          => $row->order_ref,
+			'new_status'         => $new_status,
+			'team_name'          => $row->team_name ?? '',
+			'assigned_designer'  => $designer_name,
 		];
 
-		$body      = wp_json_encode($payload);
-		$secret    = get_option('bsp_make_webhook_secret', '');
-		$signature = $secret !== '' ? hash_hmac('sha256', $body, $secret) : '';
+		$event = match ($new_status) {
+			'approved' => 'proof_approved',
+			'revision_requested' => 'revision_requested',
+			default => 'artwork_status_changed',
+		};
 
-		$headers = [
-			'Content-Type'    => 'application/json',
-			'X-BSP-Signature' => $signature,
-		];
-
-		wp_remote_post($webhook_url, [
-			'body'    => $body,
-			'headers' => $headers,
-			'timeout' => 15,
-		]);
+		\BattleSports\Webhooks::trigger_make_webhook($event, $data);
 	}
 
 	/**

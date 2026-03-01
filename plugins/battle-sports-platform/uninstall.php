@@ -31,6 +31,10 @@ function bsp_uninstall_remove_options(): void {
     $options = [
         'bsp_roles_registered',
         'bsp_monday_config',
+        'bsp_monday_board_id',
+        'bsp_monday_api_key',
+        'bsp_make_webhook_url',
+        'bsp_make_webhook_secret',
         'bsp_submission_fee_product_id',
     ];
     foreach ($options as $option) {

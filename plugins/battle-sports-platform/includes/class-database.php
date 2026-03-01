@@ -14,7 +14,7 @@ defined('ABSPATH') || exit;
  */
 final class Database {
 
-	private const DB_VERSION = '1.1';
+	private const DB_VERSION = '1.2';
 
 	/**
 	 * Installs or upgrades database tables.
@@ -79,6 +79,17 @@ final class Database {
 				PRIMARY KEY  (id),
 				KEY status (status),
 				KEY assigned_designer_id (assigned_designer_id)
+			) $charset_collate;",
+			'bsp_webhook_log'  => "CREATE TABLE {$prefix}bsp_webhook_log (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				event varchar(100) NOT NULL,
+				url text NOT NULL,
+				payload longtext NOT NULL,
+				http_code int(11) DEFAULT 0,
+				error_msg text DEFAULT NULL,
+				created_at datetime DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY  (id),
+				KEY event (event)
 			) $charset_collate;",
 			'bsp_artwork_log' => "CREATE TABLE {$prefix}bsp_artwork_log (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,

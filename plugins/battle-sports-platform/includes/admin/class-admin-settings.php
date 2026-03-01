@@ -24,6 +24,8 @@ final class AdminSettings {
     public static function init(): void {
         add_action('admin_menu', [self::class, 'add_menu_page']);
         add_action('admin_init', [self::class, 'handle_reset_product']);
+        add_action('admin_init', [self::class, 'handle_integrations_save']);
+        add_action('wp_ajax_bsp_test_monday_connection', [self::class, 'ajax_test_monday_connection']);
     }
 
     /**
@@ -72,11 +74,115 @@ final class AdminSettings {
     }
 
     /**
+     * Handles Integrations tab form save.
+     *
+     * @return void
+     */
+    public static function handle_integrations_save(): void {
+        if (!isset($_POST['bsp_integrations_save']) || !wp_verify_nonce(
+            isset($_POST['_wpnonce']) ? sanitize_text_field(wp_unslash($_POST['_wpnonce'])) : '',
+            'bsp_integrations_save'
+        )) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        if (isset($_POST['bsp_make_webhook_url'])) {
+            update_option('bsp_make_webhook_url', esc_url_raw(sanitize_text_field(wp_unslash($_POST['bsp_make_webhook_url']))));
+        }
+        if (isset($_POST['bsp_make_webhook_secret'])) {
+            $secret = sanitize_text_field(wp_unslash($_POST['bsp_make_webhook_secret']));
+            if ($secret !== '') {
+                update_option('bsp_make_webhook_secret', $secret);
+            }
+        }
+        if (isset($_POST['bsp_monday_api_key'])) {
+            $key = sanitize_text_field(wp_unslash($_POST['bsp_monday_api_key']));
+            if ($key !== '') {
+                update_option('bsp_monday_api_key', $key);
+            }
+        }
+        if (isset($_POST['bsp_monday_board_id'])) {
+            update_option('bsp_monday_board_id', sanitize_text_field(wp_unslash($_POST['bsp_monday_board_id'])));
+        }
+
+        $config = get_option('bsp_monday_config', '{}');
+        $decoded = is_string($config) ? json_decode($config, true) : [];
+        $decoded = is_array($decoded) ? $decoded : [];
+        $decoded['board_id'] = get_option('bsp_monday_board_id', '');
+        update_option('bsp_monday_config', wp_json_encode($decoded));
+
+        add_settings_error(
+            'battle_sports_settings',
+            'bsp_integrations_saved',
+            __('Integrations settings saved.', 'battle-sports-platform'),
+            'success'
+        );
+    }
+
+    /**
+     * AJAX handler for Monday.com "Test Connection" button.
+     *
+     * @return void
+     */
+    public static function ajax_test_monday_connection(): void {
+        check_ajax_referer('bsp_test_monday', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Permission denied.', 'battle-sports-platform')]);
+        }
+
+        $api = new \BattleSports\MondayApi();
+        $result = $api->test_connection();
+
+        if ($result['success']) {
+            wp_send_json_success(['board_name' => $result['board_name']]);
+        }
+
+        wp_send_json_error(['message' => $result['error'] ?? __('Connection failed.', 'battle-sports-platform')]);
+    }
+
+    /**
      * Renders the admin settings page.
      *
      * @return void
      */
     public static function render_page(): void {
+        $tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('Battle Sports Settings', 'battle-sports-platform'); ?></h1>
+
+            <nav class="nav-tab-wrapper">
+                <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::MENU_SLUG . '&tab=general')); ?>"
+                   class="nav-tab <?php echo $tab === 'general' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e('General', 'battle-sports-platform'); ?>
+                </a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::MENU_SLUG . '&tab=integrations')); ?>"
+                   class="nav-tab <?php echo $tab === 'integrations' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e('Integrations', 'battle-sports-platform'); ?>
+                </a>
+            </nav>
+
+            <?php settings_errors('battle_sports_settings'); ?>
+
+            <?php if ($tab === 'integrations') : ?>
+                <?php self::render_integrations_tab(); ?>
+            <?php else : ?>
+                <?php self::render_general_tab(); ?>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Renders the General tab (Submission Fee Product).
+     *
+     * @return void
+     */
+    private static function render_general_tab(): void {
         if (!function_exists('wc_get_product')) {
             echo '<div class="notice notice-warning"><p>' . esc_html__('WooCommerce is required for the submission fee product.', 'battle-sports-platform') . '</p></div>';
             return;
@@ -87,12 +193,7 @@ final class AdminSettings {
         $price      = $product && $product->exists() ? $product->get_price() : '';
         $exists     = $product && $product->exists();
         ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Battle Sports Settings', 'battle-sports-platform'); ?></h1>
-
-            <?php settings_errors('battle_sports_settings'); ?>
-
-            <form method="post" action="">
+        <form method="post" action="">
                 <?php wp_nonce_field('bsp_reset_submission_fee_product'); ?>
 
                 <h2><?php esc_html_e('Submission Fee Product', 'battle-sports-platform'); ?></h2>
@@ -147,7 +248,138 @@ final class AdminSettings {
                     </tbody>
                 </table>
             </form>
-        </div>
+        <?php
+    }
+
+    /**
+     * Renders the Integrations tab (Make.com, Monday.com, webhook log).
+     *
+     * @return void
+     */
+    private static function render_integrations_tab(): void {
+        $webhook_url   = get_option('bsp_make_webhook_url', '');
+        $webhook_secret = get_option('bsp_make_webhook_secret', '');
+        $monday_key    = get_option('bsp_monday_api_key', '');
+        $monday_board  = get_option('bsp_monday_board_id', '');
+        $log_entries   = \BattleSports\Webhooks::get_webhook_log(20);
+        $ajax_url      = admin_url('admin-ajax.php');
+        $nonce         = wp_create_nonce('bsp_test_monday');
+        ?>
+        <form method="post" action="">
+            <?php wp_nonce_field('bsp_integrations_save'); ?>
+
+            <h2><?php esc_html_e('Make.com', 'battle-sports-platform'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Outbound webhooks are sent to Make.com when artwork events occur.', 'battle-sports-platform'); ?>
+            </p>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><?php esc_html_e('Webhook URL', 'battle-sports-platform'); ?></th>
+                    <td>
+                        <input type="url" name="bsp_make_webhook_url" value="<?php echo esc_attr($webhook_url); ?>"
+                               class="regular-text" placeholder="https://hook.eu2.make.com/...">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php esc_html_e('Webhook Secret', 'battle-sports-platform'); ?></th>
+                    <td>
+                        <input type="password" name="bsp_make_webhook_secret" value=""
+                               class="regular-text" autocomplete="new-password" placeholder="<?php echo $webhook_secret ? '••••••••' : esc_attr__('Enter secret', 'battle-sports-platform'); ?>">
+                        <p class="description"><?php echo $webhook_secret ? esc_html__('Secret is configured. Enter a new value to change.', 'battle-sports-platform') : esc_html__('Used for X-BSP-Signature.', 'battle-sports-platform'); ?></p>
+                    </td>
+                </tr>
+            </table>
+
+            <h2><?php esc_html_e('Monday.com', 'battle-sports-platform'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Connect to Monday.com for workflow automation.', 'battle-sports-platform'); ?>
+            </p>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><?php esc_html_e('API Key', 'battle-sports-platform'); ?></th>
+                    <td>
+                        <input type="password" name="bsp_monday_api_key" value=""
+                               class="regular-text" autocomplete="new-password" placeholder="<?php echo $monday_key ? '••••••••' : esc_attr__('Enter API key', 'battle-sports-platform'); ?>">
+                        <p class="description"><?php echo $monday_key ? esc_html__('API key is configured. Enter a new value to change.', 'battle-sports-platform') : esc_html__('Get from Monday.com → Profile → API.', 'battle-sports-platform'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php esc_html_e('Board ID', 'battle-sports-platform'); ?></th>
+                    <td>
+                        <input type="text" name="bsp_monday_board_id" value="<?php echo esc_attr($monday_board); ?>"
+                               class="regular-text" placeholder="1234567890">
+                        <p class="description"><?php esc_html_e('Numeric ID from the board URL.', 'battle-sports-platform'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php esc_html_e('Test Connection', 'battle-sports-platform'); ?></th>
+                    <td>
+                        <button type="button" id="bsp-test-monday" class="button button-secondary">
+                            <?php esc_html_e('Test Connection', 'battle-sports-platform'); ?>
+                        </button>
+                        <span id="bsp-test-result"></span>
+                    </td>
+                </tr>
+            </table>
+
+            <p class="submit">
+                <input type="submit" name="bsp_integrations_save" class="button button-primary"
+                       value="<?php esc_attr_e('Save Settings', 'battle-sports-platform'); ?>">
+            </p>
+        </form>
+
+        <h2><?php esc_html_e('Webhook Log', 'battle-sports-platform'); ?></h2>
+        <p class="description"><?php esc_html_e('Last 20 outbound webhook calls to Make.com.', 'battle-sports-platform'); ?></p>
+        <table class="widefat striped">
+            <thead>
+                <tr>
+                    <th><?php esc_html_e('Time', 'battle-sports-platform'); ?></th>
+                    <th><?php esc_html_e('Event', 'battle-sports-platform'); ?></th>
+                    <th><?php esc_html_e('HTTP', 'battle-sports-platform'); ?></th>
+                    <th><?php esc_html_e('Error', 'battle-sports-platform'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($log_entries)) : ?>
+                    <tr><td colspan="4"><?php esc_html_e('No webhooks sent yet.', 'battle-sports-platform'); ?></td></tr>
+                <?php else : ?>
+                    <?php foreach ($log_entries as $row) : ?>
+                        <tr>
+                            <td><?php echo esc_html($row->created_at ?? ''); ?></td>
+                            <td><?php echo esc_html($row->event ?? ''); ?></td>
+                            <td><?php echo esc_html((string) ($row->http_code ?? 0)); ?></td>
+                            <td><?php echo esc_html($row->error_msg ?? '-'); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <script>
+        document.getElementById('bsp-test-monday').addEventListener('click', function() {
+            var btn = this;
+            var span = document.getElementById('bsp-test-result');
+            btn.disabled = true;
+            span.textContent = '<?php echo esc_js(__('Testing...', 'battle-sports-platform')); ?>';
+            fetch('<?php echo esc_url($ajax_url); ?>?action=bsp_test_monday_connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'nonce=<?php echo esc_js($nonce); ?>'
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    span.innerHTML = '<span style="color:green">✓ ' + (data.data.board_name || 'OK') + '</span>';
+                } else {
+                    span.innerHTML = '<span style="color:red">✗ ' + (data.data && data.data.message ? data.data.message : '<?php echo esc_js(__('Failed', 'battle-sports-platform')); ?>') + '</span>';
+                }
+            })
+            .catch(function() {
+                span.innerHTML = '<span style="color:red"><?php echo esc_js(__('Request failed', 'battle-sports-platform')); ?></span>';
+            })
+            .finally(function() { btn.disabled = false; });
+        });
+        </script>
         <?php
     }
 }

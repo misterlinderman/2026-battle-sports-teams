@@ -157,6 +157,16 @@ final class RestApi {
 				],
 			],
 		]);
+
+		// Inbound webhook from Make.com (no auth; verified via X-BSP-Signature).
+		register_rest_route(self::NAMESPACE, '/webhook/make', [
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [\BattleSports\Webhooks::class, 'handle_inbound_webhook'],
+				'permission_callback' => '__return_true',
+				'args'                => [],
+			],
+		]);
 	}
 
 	/**

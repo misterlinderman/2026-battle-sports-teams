@@ -62,6 +62,12 @@ final class IntakeHandler {
         }
 
         $queue->update_status($artwork_id, 'in_queue', 0, __('Payment received.', 'battle-sports-platform'));
+
+        \BattleSports\Webhooks::trigger_make_webhook('order_payment_received', [
+            'artwork_id' => $artwork_id,
+            'order_id'  => $order_id,
+            'order_ref' => $row->order_ref ?? '',
+        ]);
     }
 
     /**
@@ -238,6 +244,17 @@ final class IntakeHandler {
         ];
         $order->update_meta_data('_bsp_intake_data', wp_json_encode($intake_meta));
         $order->save();
+
+        if ($artwork_id) {
+            $queue = new \BattleSports\Artwork\ArtworkQueue();
+            $art_row = $queue->get_by_id($artwork_id);
+            \BattleSports\Webhooks::trigger_make_webhook('artwork_submitted', [
+                'artwork_id'   => $artwork_id,
+                'order_ref'    => $order_ref,
+                'team_name'    => $art_row ? ($art_row->team_name ?? '') : '',
+                'product_type' => $data['product'] ?? '7v7',
+            ]);
+        }
 
         $payment_url = $order->get_checkout_payment_url();
 
