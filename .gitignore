@@ -1,2 +1,6 @@
 # Ignore docs directory
 docs/
+
+# Ignore plugin directories
+plugins/gravityforms/
+plugins/woocommerce/
