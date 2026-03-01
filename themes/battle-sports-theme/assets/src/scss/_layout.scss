@@ -1,5 +1,10 @@
 @use 'variables' as *;
 
+// Body scroll lock when mobile drawer is open
+body.nav-open {
+  overflow: hidden;
+}
+
 // Skip link
 .skip-link {
   position: absolute;
@@ -80,33 +85,96 @@
   position: relative;
 }
 
+// Backdrop: hidden by default, visible when drawer is open
+.primary-nav__backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba($color-dark, 0.5);
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  @media (min-width: $breakpoint-md) {
+    display: none !important;
+  }
+}
+
+.primary-nav.is-open .primary-nav__backdrop {
+  display: block;
+  opacity: 1;
+}
+
+// Drawer: slide-out from right on mobile
+.primary-nav__drawer {
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(320px, 85vw);
+    z-index: 999;
+    background: $color-primary;
+    padding: 2rem 1.5rem;
+    padding-top: 4rem;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    box-shadow: -8px 0 32px rgba($color-dark, 0.2);
+  }
+
+  .primary-nav.is-open & {
+    @media (max-width: #{$breakpoint-md - 1px}) {
+      transform: translateX(0);
+    }
+  }
+}
+
 .primary-nav__menu {
   display: none;
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 1.5rem;
-
-  &.is-open {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: $color-primary;
-    padding: 1rem;
-  }
+  gap: 0;
 
   @media (min-width: $breakpoint-md) {
     display: flex;
     flex-direction: row;
+    align-items: center;
+    gap: 1.5rem;
+  }
+}
 
-    &.is-open {
-      position: static;
-      padding: 0;
-      flex-direction: row;
-    }
+.primary-nav__drawer .primary-nav__menu {
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+}
+
+.primary-nav__drawer .primary-nav__menu li {
+  border-bottom: 1px solid rgba($color-light, 0.1);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.primary-nav__drawer .primary-nav__menu a {
+  display: block;
+  padding: 1rem 0;
+  color: $color-light;
+  font-weight: 600;
+  font-size: $font-size-lg;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-accent;
+    text-decoration: none;
   }
 }
 

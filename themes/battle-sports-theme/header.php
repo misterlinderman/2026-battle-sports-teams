@@ -33,17 +33,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 
 		<nav class="primary-nav" aria-label="<?php esc_attr_e( 'Primary', 'battle-sports' ); ?>">
-			<?php
-			wp_nav_menu(
-				array(
-					'theme_location' => 'primary',
-					'menu_class'     => 'primary-nav__menu',
-					'menu_id'        => 'primary-nav-menu',
-					'container'      => false,
-					'fallback_cb'    => false,
-				)
-			);
-			?>
+			<button type="button" class="primary-nav__backdrop" aria-hidden="true" aria-label="<?php esc_attr_e( 'Close menu', 'battle-sports' ); ?>"></button>
+			<div class="primary-nav__drawer">
+				<?php
+				if ( has_nav_menu( 'primary' ) ) {
+					wp_nav_menu(
+						array(
+							'theme_location' => 'primary',
+							'menu_class'     => 'primary-nav__menu',
+							'menu_id'        => 'primary-nav-menu',
+							'container'      => false,
+						)
+					);
+				} else {
+					$products_page = get_page_by_path( 'products', OBJECT, 'page' );
+					$products_url  = $products_page ? get_permalink( $products_page ) : home_url( '/products/' );
+					$portal_page   = get_page_by_path( 'portal', OBJECT, 'page' );
+					$portal_url    = $portal_page ? get_permalink( $portal_page ) : home_url( '/portal/' );
+					$contact_page  = get_page_by_path( 'contact', OBJECT, 'page' );
+					$contact_url   = $contact_page ? get_permalink( $contact_page ) : home_url( '/contact/' );
+					?>
+					<ul class="primary-nav__menu" id="primary-nav-menu">
+						<li><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'battle-sports' ); ?></a></li>
+						<li><a href="<?php echo esc_url( $products_url ); ?>"><?php esc_html_e( 'Products', 'battle-sports' ); ?></a></li>
+						<li><a href="<?php echo esc_url( $portal_url ); ?>"><?php esc_html_e( 'My Portal', 'battle-sports' ); ?></a></li>
+						<li><a href="<?php echo esc_url( $contact_url ); ?>"><?php esc_html_e( 'Contact', 'battle-sports' ); ?></a></li>
+					</ul>
+				<?php } ?>
+			</div>
 		</nav>
 
 		<button class="primary-nav__hamburger" type="button" aria-label="<?php esc_attr_e( 'Toggle menu', 'battle-sports' ); ?>" aria-expanded="false" aria-controls="primary-nav-menu">
