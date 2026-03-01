@@ -56,5 +56,11 @@ final class Roles {
             $admin->add_cap('bsp_upload_proof');
             $admin->add_cap('bsp_manage_artwork_queue');
         }
+
+        // Ensure designer has bsp_manage_artwork_queue (fixes roles created before this cap existed).
+        $designer = get_role(self::ROLE_DESIGNER);
+        if ($designer && empty($designer->capabilities['bsp_manage_artwork_queue'])) {
+            $designer->add_cap('bsp_manage_artwork_queue');
+        }
     }
 }
