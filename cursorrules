@@ -1,0 +1,182 @@
+# Battle Sports WordPress Platform — Cursor Rules
+# Project: battleuniforms.com WordPress Theme & Plugin Rebuild
+# Agency: Ask and Deliver | March 2026
+
+## Project Context
+
+This is a ground-up rebuild of the Battle Sports WordPress theme and custom platform plugin.
+The previous build used a basic dated theme with Gravity Forms as the primary intake mechanism.
+The new build modernizes the UX, replaces Gravity Forms intake with native custom UI where
+appropriate, and introduces AI-assisted development workflows via Cursor + Claude.
+
+## Stack
+
+- WordPress 6.4+ on Local by Flywheel (PHP 8.2, MySQL 8.0, nginx)
+- Custom plugin: `battle-sports-platform` (PHP 8.x, OOP, PSR-4 autoloading)
+- Custom theme: `battle-sports-theme` (Vite + SCSS + vanilla JS, no parent theme)
+- WooCommerce for $50 submission fee and future commerce
+- Gravity Forms (retained for existing data compatibility; new intake may replace specific forms)
+- Make.com webhooks → Monday.com for artwork workflow automation
+- WP REST API for portal data endpoints
+
+## Products / Forms Covered
+
+The site serves five uniform product lines, each with its own order form:
+1. Battle 7v7 (flag football — jerseys + shorts)
+2. Battle Flag (flag football — jerseys + shorts, women's variant)
+3. Battle Women's Flag (dedicated women's form)
+4. Battle Charlie Tackle (jerseys + pants, custom logo/stripe options)
+5. Battle Alpha Tackle (jerseys + pants, tackle twill upgrade option)
+6. Battle Bravo Tackle (jerseys + pants)
+
+All forms follow a 4-step structure:
+- Step 1: Customer Info (name, role, shipping, email, phone)
+- Step 2: Team Info (org, team name, age group, colors, logo upload)
+- Step 3: Uniform Design (garment selection, design templates, font/number config)
+- Step 4: Roster & Quantities (roster list with name/number/sizes OR quantity estimates)
+
+## Coding Standards
+
+### PHP
+- PHP 8.2 minimum — use typed properties, match expressions, named arguments where appropriate
+- All classes in `BattleSports\` namespace
+- PSR-4 autoloading via the plugin's spl_autoload_register
+- No global functions — wrap everything in classes
+- Use WordPress hooks (add_action / add_filter) exclusively for integration points
+- Prefix all custom DB tables with `bsp_` (e.g., `bsp_rosters`, `bsp_artwork_queue`)
+- Sanitize all input with WordPress sanitization functions
+- Use `wp_nonce_field()` / `wp_verify_nonce()` on all forms
+- Never echo raw SQL — always use `$wpdb->prepare()`
+
+### JavaScript
+- ES2020+ syntax, compiled via Vite
+- No jQuery in new code (jQuery is available but prefer vanilla JS)
+- Use `fetch()` for REST API calls with nonce headers
+- Keep JS modular — one file per feature area in `assets/src/js/`
+
+### SCSS
+- Variables in `_variables.scss` — no magic numbers in component files
+- BEM naming convention for all custom components
+- Mobile-first breakpoints
+- Never override WooCommerce styles globally — scope to `.woocommerce` blocks only
+
+### Templates
+- All custom page templates in `battle-sports-theme/templates/`
+- All plugin output templates in `battle-sports-platform/templates/`
+- No business logic in template files — templates are presentational only
+- Always use `get_template_part()` for reusable partials
+
+## Directory Layout (Enforced)
+
+```
+battle-sports-theme/
+  style.css
+  index.php
+  functions.php
+  header.php / footer.php
+  templates/
+    template-portal.php
+    template-catalog.php
+    template-product-detail.php
+  woocommerce/
+  assets/src/scss/   ← source
+  assets/src/js/     ← source
+  assets/dist/       ← compiled (gitignored)
+
+battle-sports-platform/
+  battle-sports-platform.php  ← plugin entry
+  includes/
+    class-plugin.php
+    class-roles.php
+    class-post-types.php
+    class-rest-api.php
+    class-webhooks.php
+    customer-portal/
+      class-portal.php
+      class-dashboard.php
+    artwork/
+      class-artwork-queue.php
+      class-artwork-approval.php
+    roster/
+      class-roster.php
+      class-team.php
+    intake/
+      class-intake-form.php     ← custom intake replacing/extending GF
+      class-intake-handler.php
+  templates/
+    portal-dashboard.php
+    artwork-submission.php
+    roster-view.php
+    intake/
+      step-customer.php
+      step-team.php
+      step-design.php
+      step-roster.php
+  admin/
+    class-admin.php
+    views/
+```
+
+## User Roles
+
+| Role | Slug | Capabilities |
+|------|------|-------------|
+| Administrator | administrator | Full access |
+| Coach / Customer | bsp_coach | Portal access, submit orders, manage own rosters |
+| Designer | bsp_designer | Artwork queue access, proof uploads |
+| Subscriber | subscriber | Registration only, pending approval |
+
+## Naming Conventions
+
+- Custom post types: `bsp_roster`, `bsp_team`, `bsp_artwork`, `bsp_order`
+- Taxonomies: `bsp_sport`, `bsp_age_group`
+- REST namespace: `battle-sports/v1`
+- Option keys: `bsp_*`
+- Transient keys: `bsp_*`
+- Meta keys: `_bsp_*`
+- Hook names: `bsp_*`
+
+## AI Development Guidelines (Cursor + Claude)
+
+- Always read ARCHITECTURE.md before making structural changes
+- Update ARCHITECTURE.md when adding new files, CPTs, endpoints, or roles
+- Reference `gravityforms-export-2026-03-01.json` when rebuilding intake logic — all field
+  labels, choices, and conditional logic are documented there
+- When building intake forms natively, mirror the existing GF field structure exactly before
+  enhancing — backwards compat with existing submissions matters
+- Prefer small, focused commits — one feature or fix per session
+- Write PHPDoc on all public methods
+- Write inline comments for non-obvious logic
+- Do not remove existing Gravity Forms hooks without confirming migration is complete
+
+## Make.com / Monday.com Integration
+
+- Webhook endpoint: `POST /wp-json/battle-sports/v1/webhook/make`
+- Monday.com board IDs and column IDs stored in wp_options under `bsp_monday_config`
+- Artwork status flow: `submitted → in_queue → in_progress → proof_sent → approved → complete`
+
+## Security Requirements
+
+- All REST endpoints require authentication unless explicitly public
+- File uploads validated by MIME type and extension whitelist: jpg, jpeg, png, pdf, ai, eps
+- Max upload size enforced at application layer (50MB)
+- All admin pages check `current_user_can('manage_options')`
+- Portal pages check `is_user_logged_in()` and role capability
+
+## Testing Accounts to Maintain
+
+| Role | Username |
+|------|----------|
+| bsp_coach | test_coach |
+| bsp_designer | test_designer |
+| subscriber | test_subscriber |
+
+## Do Not
+
+- Do not install page builder plugins (Elementor, Divi, etc.)
+- Do not use `update_option()` for per-user data — use user meta
+- Do not hardcode URLs — always use `home_url()`, `get_template_directory_uri()`, etc.
+- Do not commit `node_modules/` or `assets/dist/`
+- Do not modify WordPress core files
+- Do not use `extract()` in templates
+- Do not store credit card or payment data locally
