@@ -81,6 +81,79 @@ final class RestApi {
 				'permission_callback' => [$this, 'check_roster_delete_permission'],
 			],
 		]);
+
+		// Artwork endpoints
+		register_rest_route(self::NAMESPACE, '/artwork', [
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [$this, 'get_artwork_list'],
+				'permission_callback' => [$this, 'check_artwork_list_permission'],
+				'args'                => [
+					'status'      => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
+					'designer_id' => ['type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
+					'page'        => ['type' => 'integer', 'minimum' => 1, 'default' => 1],
+					'per_page'    => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50, 'default' => 20],
+				],
+			],
+		]);
+
+		register_rest_route(self::NAMESPACE, '/artwork/(?P<id>\d+)', [
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [$this, 'get_artwork'],
+				'permission_callback' => [$this, 'check_artwork_read_permission'],
+				'args'                => [
+					'id' => ['required' => true, 'type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
+				],
+			],
+		]);
+
+		register_rest_route(self::NAMESPACE, '/artwork/(?P<id>\d+)/status', [
+			[
+				'methods'             => 'PATCH',
+				'callback'            => [$this, 'patch_artwork_status'],
+				'permission_callback' => [$this, 'check_artwork_manage_permission'],
+				'args'                => [
+					'id'     => ['required' => true, 'type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
+					'status' => ['required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
+					'notes'  => ['type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_textarea_field'],
+				],
+			],
+		]);
+
+		register_rest_route(self::NAMESPACE, '/artwork/(?P<id>\d+)/proof', [
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [$this, 'upload_artwork_proof'],
+				'permission_callback' => [$this, 'check_artwork_proof_permission'],
+				'args'                => [
+					'id' => ['required' => true, 'type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
+				],
+			],
+		]);
+
+		register_rest_route(self::NAMESPACE, '/artwork/(?P<id>\d+)/approve', [
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [$this, 'approve_artwork'],
+				'permission_callback' => [$this, 'check_artwork_coach_permission'],
+				'args'                => [
+					'id' => ['required' => true, 'type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
+				],
+			],
+		]);
+
+		register_rest_route(self::NAMESPACE, '/artwork/(?P<id>\d+)/revision', [
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [$this, 'request_artwork_revision'],
+				'permission_callback' => [$this, 'check_artwork_coach_permission'],
+				'args'                => [
+					'id'    => ['required' => true, 'type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
+					'notes' => ['required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'],
+				],
+			],
+		]);
 	}
 
 	/**
@@ -168,6 +241,99 @@ final class RestApi {
 		$team_id = (int) $request['id'];
 		if (!$this->user_owns_team($team_id)) {
 			return new \WP_Error('rest_forbidden', __('You do not have permission to access this team.', 'battle-sports-platform'), ['status' => 403]);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Permission callback: GET /artwork — Designer (bsp_view_artwork_queue).
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return true|\WP_Error
+	 */
+	public function check_artwork_list_permission(\WP_REST_Request $request): true|\WP_Error {
+		return $this->check_nonce_and_cap($request, 'bsp_view_artwork_queue');
+	}
+
+	/**
+	 * Permission callback: GET /artwork/{id} — Designer or team owner.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return true|\WP_Error
+	 */
+	public function check_artwork_read_permission(\WP_REST_Request $request): true|\WP_Error {
+		$result = $this->verify_nonce($request);
+		if (is_wp_error($result)) {
+			return $result;
+		}
+		if (!is_user_logged_in()) {
+			return new \WP_Error('rest_not_logged_in', __('You must be logged in.', 'battle-sports-platform'), ['status' => 401]);
+		}
+
+		$queue = new \BattleSports\Artwork\ArtworkQueue();
+		$row   = $queue->get_by_id((int) $request['id']);
+		if (!$row) {
+			return new \WP_Error('rest_not_found', __('Artwork not found.', 'battle-sports-platform'), ['status' => 404]);
+		}
+
+		$user_id = get_current_user_id();
+		if (current_user_can('bsp_view_artwork_queue')) {
+			return true;
+		}
+		if ($row->team_id && $this->user_owns_team((int) $row->team_id)) {
+			return true;
+		}
+
+		return new \WP_Error('rest_forbidden', __('You do not have permission to access this artwork.', 'battle-sports-platform'), ['status' => 403]);
+	}
+
+	/**
+	 * Permission callback: PATCH /artwork/{id}/status — Designer (bsp_manage_artwork_queue).
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return true|\WP_Error
+	 */
+	public function check_artwork_manage_permission(\WP_REST_Request $request): true|\WP_Error {
+		return $this->check_nonce_and_cap($request, 'bsp_manage_artwork_queue');
+	}
+
+	/**
+	 * Permission callback: POST /artwork/{id}/proof — Designer (bsp_upload_proof).
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return true|\WP_Error
+	 */
+	public function check_artwork_proof_permission(\WP_REST_Request $request): true|\WP_Error {
+		return $this->check_nonce_and_cap($request, 'bsp_upload_proof');
+	}
+
+	/**
+	 * Permission callback: POST /artwork/{id}/approve, /revision — Coach, team owner.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return true|\WP_Error
+	 */
+	public function check_artwork_coach_permission(\WP_REST_Request $request): true|\WP_Error {
+		$result = $this->verify_nonce($request);
+		if (is_wp_error($result)) {
+			return $result;
+		}
+		if (!is_user_logged_in()) {
+			return new \WP_Error('rest_not_logged_in', __('You must be logged in.', 'battle-sports-platform'), ['status' => 401]);
+		}
+
+		$queue = new \BattleSports\Artwork\ArtworkQueue();
+		$row   = $queue->get_by_id((int) $request['id']);
+		if (!$row) {
+			return new \WP_Error('rest_not_found', __('Artwork not found.', 'battle-sports-platform'), ['status' => 404]);
+		}
+
+		$user_id = get_current_user_id();
+		$owns_team = $row->team_id && $this->user_owns_team((int) $row->team_id);
+		$owns_order = (int) $row->user_id === $user_id;
+		if (!$owns_team && !$owns_order) {
+			return new \WP_Error('rest_forbidden', __('You do not have permission to perform this action.', 'battle-sports-platform'), ['status' => 403]);
 		}
 
 		return true;
@@ -483,6 +649,141 @@ final class RestApi {
 		}
 
 		return rest_ensure_response(['imported' => $imported, 'errors' => $errors]);
+	}
+
+	/**
+	 * GET /artwork — Designer: list queue (filterable by status).
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_artwork_list(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+		$queue   = new \BattleSports\Artwork\ArtworkQueue();
+		$filters = [
+			'page'     => (int) $request->get_param('page'),
+			'per_page' => (int) $request->get_param('per_page'),
+		];
+		if ($request->get_param('status') !== null) {
+			$filters['status'] = (string) $request->get_param('status');
+		}
+		if ($request->get_param('designer_id') !== null && $request->get_param('designer_id') > 0) {
+			$filters['designer_id'] = (int) $request->get_param('designer_id');
+		}
+
+		$result = $queue->get_queue($filters);
+
+		return rest_ensure_response([
+			'items' => $result['items'],
+			'total' => $result['total'],
+		]);
+	}
+
+	/**
+	 * GET /artwork/{id} — Designer or team owner.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_artwork(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+		$queue = new \BattleSports\Artwork\ArtworkQueue();
+		$row   = $queue->get_by_id((int) $request['id']);
+		if (!$row) {
+			return new \WP_Error('rest_not_found', __('Artwork not found.', 'battle-sports-platform'), ['status' => 404]);
+		}
+
+		$proof_url = '';
+		if (!empty($row->proof_attachment_id)) {
+			$proof_url = wp_get_attachment_url((int) $row->proof_attachment_id) ?: '';
+		}
+
+		$data = (array) $row;
+		$data['proof_url'] = $proof_url;
+
+		return rest_ensure_response($data);
+	}
+
+	/**
+	 * PATCH /artwork/{id}/status — Designer: manual status update with notes.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function patch_artwork_status(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+		$queue = new \BattleSports\Artwork\ArtworkQueue();
+		$result = $queue->update_status(
+			(int) $request['id'],
+			(string) $request['status'],
+			get_current_user_id(),
+			(string) $request->get_param('notes')
+		);
+
+		if (is_wp_error($result)) {
+			return $result;
+		}
+
+		return rest_ensure_response(['updated' => true]);
+	}
+
+	/**
+	 * POST /artwork/{id}/proof — Designer: multipart file upload.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function upload_artwork_proof(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+		$files = $request->get_file_params();
+		$file  = $files['file'] ?? ($files['proof'] ?? null);
+
+		if (!$file || empty($file['tmp_name'])) {
+			return new \WP_Error('rest_missing_file', __('No file uploaded. Use multipart/form-data with "file" field.', 'battle-sports-platform'), ['status' => 400]);
+		}
+
+		$approval = new \BattleSports\Artwork\ArtworkApproval();
+		$result   = $approval->upload_proof((int) $request['id'], $file);
+
+		if (is_wp_error($result)) {
+			return $result;
+		}
+
+		return rest_ensure_response(['uploaded' => true]);
+	}
+
+	/**
+	 * POST /artwork/{id}/approve — Coach: customer approval.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function approve_artwork(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+		$approval = new \BattleSports\Artwork\ArtworkApproval();
+		$result   = $approval->customer_approve((int) $request['id'], get_current_user_id());
+
+		if (is_wp_error($result)) {
+			return $result;
+		}
+
+		return rest_ensure_response(['approved' => true]);
+	}
+
+	/**
+	 * POST /artwork/{id}/revision — Coach: request revision with notes.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function request_artwork_revision(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+		$approval = new \BattleSports\Artwork\ArtworkApproval();
+		$result   = $approval->customer_request_revision(
+			(int) $request['id'],
+			get_current_user_id(),
+			(string) $request['notes']
+		);
+
+		if (is_wp_error($result)) {
+			return $result;
+		}
+
+		return rest_ensure_response(['revision_requested' => true]);
 	}
 
 	/**

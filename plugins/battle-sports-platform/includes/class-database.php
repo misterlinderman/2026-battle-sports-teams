@@ -14,7 +14,7 @@ defined('ABSPATH') || exit;
  */
 final class Database {
 
-	private const DB_VERSION = '1.0';
+	private const DB_VERSION = '1.1';
 
 	/**
 	 * Installs or upgrades database tables.
@@ -71,12 +71,25 @@ final class Database {
 				user_id bigint(20) unsigned NOT NULL,
 				status varchar(50) NOT NULL DEFAULT 'submitted',
 				assigned_designer_id bigint(20) unsigned DEFAULT NULL,
+				proof_attachment_id bigint(20) unsigned DEFAULT NULL,
 				monday_item_id varchar(100) DEFAULT NULL,
 				product_type varchar(100) DEFAULT NULL,
 				submitted_at datetime DEFAULT CURRENT_TIMESTAMP,
 				updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 				PRIMARY KEY  (id),
-				KEY status (status)
+				KEY status (status),
+				KEY assigned_designer_id (assigned_designer_id)
+			) $charset_collate;",
+			'bsp_artwork_log' => "CREATE TABLE {$prefix}bsp_artwork_log (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				artwork_id bigint(20) unsigned NOT NULL,
+				from_status varchar(50) NOT NULL,
+				to_status varchar(50) NOT NULL,
+				changed_by bigint(20) unsigned NOT NULL,
+				changed_at datetime DEFAULT CURRENT_TIMESTAMP,
+				notes text DEFAULT NULL,
+				PRIMARY KEY  (id),
+				KEY artwork_id (artwork_id)
 			) $charset_collate;",
 		];
 

@@ -23,31 +23,38 @@ final class Roles {
      * @return void
      */
     public static function register(): void {
-        if (get_option(self::OPTION_ROLES_REGISTERED)) {
-            return;
+        if (!get_option(self::OPTION_ROLES_REGISTERED)) {
+            add_role(
+                self::ROLE_COACH,
+                __('Coach / Customer', 'battle-sports-platform'),
+                [
+                    'read' => true,
+                    'bsp_submit_order' => true,
+                    'bsp_view_portal' => true,
+                    'bsp_manage_roster' => true,
+                ]
+            );
+
+            add_role(
+                self::ROLE_DESIGNER,
+                __('Designer', 'battle-sports-platform'),
+                [
+                    'read' => true,
+                    'bsp_view_artwork_queue' => true,
+                    'bsp_upload_proof' => true,
+                    'bsp_manage_artwork_queue' => true,
+                ]
+            );
+
+            update_option(self::OPTION_ROLES_REGISTERED, true);
         }
 
-        add_role(
-            self::ROLE_COACH,
-            __('Coach / Customer', 'battle-sports-platform'),
-            [
-                'read' => true,
-                'bsp_submit_order' => true,
-                'bsp_view_portal' => true,
-                'bsp_manage_roster' => true,
-            ]
-        );
-
-        add_role(
-            self::ROLE_DESIGNER,
-            __('Designer', 'battle-sports-platform'),
-            [
-                'read' => true,
-                'bsp_view_artwork_queue' => true,
-                'bsp_upload_proof' => true,
-            ]
-        );
-
-        update_option(self::OPTION_ROLES_REGISTERED, true);
+        // Grant artwork capabilities to administrators (runs every init, idempotent).
+        $admin = get_role('administrator');
+        if ($admin) {
+            $admin->add_cap('bsp_view_artwork_queue');
+            $admin->add_cap('bsp_upload_proof');
+            $admin->add_cap('bsp_manage_artwork_queue');
+        }
     }
 }
