@@ -1,0 +1,88 @@
+@use 'variables' as *;
+@use 'sass:color';
+
+// Button mixin for reuse in other modules
+@mixin btn-base {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-family: $font-primary;
+  font-size: $font-size-base;
+  font-weight: 600;
+  line-height: $line-height-tight;
+  text-align: center;
+  text-decoration: none;
+  color: $color-light;
+  background: $color-accent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: color.adjust($color-accent, $lightness: -8%);
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-accent;
+    outline-offset: 2px;
+  }
+}
+
+// Buttons
+.btn {
+  @include btn-base;
+}
+
+.btn--primary {
+  background: $color-primary;
+
+  &:hover {
+    background: color.adjust($color-primary, $lightness: 10%);
+  }
+}
+
+// Cards
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba($color-dark, 0.1);
+  overflow: hidden;
+}
+
+.card__body {
+  padding: 1.5rem;
+}
+
+// Form elements
+.form__label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  font-size: $font-size-sm;
+}
+
+.form__input,
+.form__select,
+.form__textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-family: $font-primary;
+  font-size: $font-size-base;
+  line-height: $line-height-normal;
+  color: $color-dark;
+  background: #fff;
+  border: 1px solid rgba($color-dark, 0.2);
+  border-radius: 4px;
+
+  &:focus {
+    outline: none;
+    border-color: $color-accent;
+    box-shadow: 0 0 0 2px rgba($color-accent, 0.2);
+  }
+}
+
+.form__textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
