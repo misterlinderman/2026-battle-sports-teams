@@ -4,3 +4,7 @@ docs/
 # Ignore plugin directories
 plugins/gravityforms/
 plugins/woocommerce/
+
+# Theme build artifacts
+themes/battle-sports-theme/node_modules/
+themes/battle-sports-theme/assets/dist/

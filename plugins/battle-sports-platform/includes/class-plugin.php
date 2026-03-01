@@ -72,7 +72,8 @@ final class Plugin {
      * @return void
      */
     public function load_rest_api(): void {
-        // Stub: will be implemented in class-rest-api.php
+        $rest_api = new RestApi();
+        $rest_api->register_routes();
     }
 
     /**
@@ -81,7 +82,7 @@ final class Plugin {
      * @return void
      */
     public function load_portal(): void {
-        // Stub: will be implemented in customer-portal/
+        \BattleSports\CustomerPortal\Portal::init();
     }
 
     /**

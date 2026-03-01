@@ -56,6 +56,11 @@ spl_autoload_register(static function (string $class): void {
     }
 });
 
+register_activation_hook(BSP_PLUGIN_FILE, static function (): void {
+    Database::install();
+    \BattleSports\CustomerPortal\Portal::create_portal_page_on_activation();
+});
+
 add_action('plugins_loaded', static function (): void {
     Plugin::get_instance()->init();
 }, 0);
