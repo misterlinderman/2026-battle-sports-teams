@@ -47,6 +47,7 @@ final class Plugin {
         add_action('rest_api_init', [$this, 'load_rest_api']);
         add_action('init', [$this, 'load_portal']);
         add_action('init', [$this, 'load_intake']);
+        add_action('admin_menu', [$this, 'load_admin']);
     }
 
     /**
@@ -87,12 +88,55 @@ final class Plugin {
     }
 
     /**
-     * Loads intake form (multi-step order forms).
+     * Loads intake form (multi-step order forms) and submission handler.
      *
      * @return void
      */
     public function load_intake(): void {
         \BattleSports\Intake\IntakeForm::init();
+        \BattleSports\Intake\IntakeHandler::init();
+    }
+
+    /**
+     * Loads admin settings page.
+     *
+     * @return void
+     */
+    public function load_admin(): void {
+        \BattleSports\Admin\AdminSettings::init();
+    }
+
+    /**
+     * Creates the $50 submission fee WooCommerce product on plugin activation.
+     *
+     * Checks if option 'bsp_submission_fee_product_id' exists and product still exists.
+     * If not, creates a WooCommerce simple product and stores its ID.
+     *
+     * @return void
+     */
+    public static function create_submission_fee_product(): void {
+        if (!class_exists('WooCommerce')) {
+            return;
+        }
+
+        $product_id = (int) get_option('bsp_submission_fee_product_id', 0);
+        if ($product_id > 0) {
+            $product = wc_get_product($product_id);
+            if ($product && $product->exists()) {
+                return;
+            }
+        }
+
+        $product = new \WC_Product_Simple();
+        $product->set_name(__('Uniform Design Submission Fee', 'battle-sports-platform'));
+        $product->set_regular_price('50.00');
+        $product->set_virtual(true);
+        $product->set_downloadable(false);
+        $product->set_status('publish');
+        $product->set_sku('BSP-SUBMISSION-FEE');
+        $product->save();
+
+        update_option('bsp_submission_fee_product_id', $product->get_id());
     }
 
     /**

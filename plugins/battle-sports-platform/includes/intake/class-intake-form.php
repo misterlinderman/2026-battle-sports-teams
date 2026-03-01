@@ -179,8 +179,14 @@ final class IntakeForm {
         $nonce = wp_nonce_field(self::NONCE_ACTION, 'bsp_intake_nonce', true, false);
         $color_json = wp_json_encode($standard_colors);
         $color_attr = is_string($color_json) ? $color_json : '[]';
+        $error = isset($_GET['bsp_error']) ? sanitize_text_field(wp_unslash($_GET['bsp_error'])) : '';
         ?>
         <div class="bsp-intake" id="bsp-intake-form" data-product="<?php echo esc_attr($product); ?>" data-standard-colors="<?php echo esc_attr($color_attr); ?>">
+            <?php if ($error !== '') : ?>
+                <div class="bsp-intake__error-notice" role="alert">
+                    <?php echo esc_html($error); ?>
+                </div>
+            <?php endif; ?>
             <?php echo $nonce; ?>
             <input type="hidden" name="bsp_intake_product" value="<?php echo esc_attr($product); ?>">
             <input type="hidden" name="bsp_intake_state" id="bsp-intake-state" value="">

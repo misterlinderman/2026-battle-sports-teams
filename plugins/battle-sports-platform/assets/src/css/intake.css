@@ -7,6 +7,16 @@
     margin: 0 auto;
 }
 
+.bsp-intake__error-notice {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 0.375rem;
+    color: #b91c1c;
+    font-size: 0.875rem;
+}
+
 .bsp-intake__progress {
     margin-bottom: 1.5rem;
 }

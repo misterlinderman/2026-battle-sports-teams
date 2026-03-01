@@ -31,6 +31,7 @@ function bsp_uninstall_remove_options(): void {
     $options = [
         'bsp_roles_registered',
         'bsp_monday_config',
+        'bsp_submission_fee_product_id',
     ];
     foreach ($options as $option) {
         delete_option($option);
