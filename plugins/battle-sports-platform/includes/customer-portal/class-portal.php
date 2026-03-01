@@ -16,6 +16,7 @@ final class Portal {
 
     private const SHORTCODE = 'bsp_portal';
     private const SHORTCODE_ROSTER = 'bsp_roster_manager';
+    private const SHORTCODE_ARTWORK_QUEUE = 'bsp_artwork_queue';
 
     /**
      * Initializes the portal and registers the shortcode.
@@ -25,6 +26,7 @@ final class Portal {
     public static function init(): void {
         add_shortcode(self::SHORTCODE, [self::class, 'render']);
         add_shortcode(self::SHORTCODE_ROSTER, [self::class, 'render_roster_manager']);
+        add_shortcode(self::SHORTCODE_ARTWORK_QUEUE, [self::class, 'render_artwork_queue']);
     }
 
     /**
@@ -101,9 +103,37 @@ final class Portal {
         $recent_orders = $dashboard->get_recent_orders($user_id, 5);
         $pending_approvals = $dashboard->get_pending_approvals($user_id);
 
+        if (!empty($pending_approvals)) {
+            self::enqueue_portal_artwork_assets();
+        }
+
         ob_start();
         include BSP_PLUGIN_DIR . 'templates/portal-dashboard.php';
         return ob_get_clean();
+    }
+
+    /**
+     * Enqueues script for customer artwork approve/revision actions.
+     *
+     * @return void
+     */
+    private static function enqueue_portal_artwork_assets(): void {
+        $handle = 'bsp-portal-artwork';
+        wp_enqueue_script(
+            $handle,
+            BSP_PLUGIN_URL . 'assets/src/js/portal-artwork.js',
+            [],
+            BSP_VERSION,
+            true
+        );
+        wp_localize_script(
+            $handle,
+            'bspData',
+            [
+                'nonce'  => wp_create_nonce('wp_rest'),
+                'apiUrl' => esc_url_raw(rest_url('battle-sports/v1')),
+            ]
+        );
     }
 
     /**
@@ -137,6 +167,32 @@ final class Portal {
     }
 
     /**
+     * Renders the artwork queue shortcode.
+     *
+     * Shows artwork-queue.php if user has bsp_view_artwork_queue capability.
+     *
+     * @param array<string, string> $atts Shortcode attributes (unused).
+     * @return string
+     */
+    public static function render_artwork_queue(array $atts = []): string {
+        if (!is_user_logged_in()) {
+            return self::render_login_form();
+        }
+
+        if (!current_user_can('bsp_view_artwork_queue')) {
+            return '<div class="bsp-portal bsp-portal--pending">' .
+                '<p class="bsp-portal__pending-message">' .
+                esc_html__('You do not have permission to view the artwork queue.', 'battle-sports-platform') .
+                '</p></div>';
+        }
+
+        self::enqueue_artwork_queue_assets();
+        ob_start();
+        include BSP_PLUGIN_DIR . 'templates/artwork-queue.php';
+        return ob_get_clean();
+    }
+
+    /**
      * Enqueues roster manager script and localizes bspData.
      *
      * @return void
@@ -157,6 +213,38 @@ final class Portal {
             [
                 'nonce'  => wp_create_nonce('wp_rest'),
                 'apiUrl' => esc_url_raw(rest_url('battle-sports/v1')),
+            ]
+        );
+    }
+
+    /**
+     * Enqueues artwork queue script and styles.
+     *
+     * @return void
+     */
+    private static function enqueue_artwork_queue_assets(): void {
+        $style_handle = 'bsp-artwork-queue-style';
+        $script_handle = 'bsp-artwork-queue';
+        wp_enqueue_style(
+            $style_handle,
+            BSP_PLUGIN_URL . 'assets/src/css/artwork-queue.css',
+            [],
+            BSP_VERSION
+        );
+        wp_enqueue_script(
+            $script_handle,
+            BSP_PLUGIN_URL . 'assets/src/js/artwork-queue.js',
+            [],
+            BSP_VERSION,
+            true
+        );
+        wp_localize_script(
+            $script_handle,
+            'bspData',
+            [
+                'nonce'         => wp_create_nonce('wp_rest'),
+                'apiUrl'        => esc_url_raw(rest_url('battle-sports/v1')),
+                'currentUserId' => (string) get_current_user_id(),
             ]
         );
     }
@@ -184,6 +272,31 @@ final class Portal {
             }
         }
         return home_url('/portal/rosters/');
+    }
+
+    /**
+     * Gets the artwork queue page URL.
+     *
+     * @return string
+     */
+    public static function get_artwork_queue_page_url(): string {
+        $portal = get_page_by_path('portal', OBJECT, 'page');
+        if (!$portal) {
+            return home_url('/portal/artwork-queue/');
+        }
+        $children = get_pages(
+            [
+                'parent'      => $portal->ID,
+                'post_status' => 'publish',
+                'number'      => 50,
+            ]
+        );
+        foreach ($children ?: [] as $child) {
+            if ($child->post_name === 'artwork-queue') {
+                return get_permalink($child);
+            }
+        }
+        return home_url('/portal/artwork-queue/');
     }
 
     /**
@@ -227,6 +340,45 @@ final class Portal {
         }
 
         self::create_rosters_page_on_activation($portal_id);
+        self::create_artwork_queue_page_on_activation($portal_id);
+    }
+
+    /**
+     * Creates the artwork queue sub-page under portal on activation.
+     *
+     * @param int $portal_page_id Portal page ID.
+     * @return void
+     */
+    public static function create_artwork_queue_page_on_activation(int $portal_page_id): void {
+        if ($portal_page_id <= 0) {
+            return;
+        }
+
+        $children = get_pages(
+            [
+                'parent'      => $portal_page_id,
+                'post_status' => 'any',
+                'number'      => 100,
+            ]
+        );
+        foreach ($children ?: [] as $child) {
+            if ($child->post_name === 'artwork-queue') {
+                return;
+            }
+        }
+
+        wp_insert_post(
+            [
+                'post_title'   => __('Artwork Queue', 'battle-sports-platform'),
+                'post_name'    => 'artwork-queue',
+                'post_status'  => 'publish',
+                'post_type'    => 'page',
+                'post_content' => '[' . self::SHORTCODE_ARTWORK_QUEUE . ']',
+                'post_author'  => 1,
+                'post_parent'  => $portal_page_id,
+            ],
+            true
+        );
     }
 
     /**

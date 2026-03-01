@@ -84,7 +84,7 @@ final class ArtworkQueue {
 	/**
 	 * Gets a paginated list of artwork queue items with optional filters.
 	 *
-	 * @param array{status?: string, designer_id?: int, per_page?: int, page?: int} $filters Optional filters.
+	 * @param array{status?: string, designer_id?: int, unassigned?: bool, date_from?: string, date_to?: string, per_page?: int, page?: int} $filters Optional filters.
 	 * @return array{items: list<object>, total: int}
 	 */
 	public function get_queue(array $filters = []): array {
@@ -107,9 +107,20 @@ final class ArtworkQueue {
 			}
 		}
 
-		if (isset($filters['designer_id']) && $filters['designer_id'] > 0) {
+		if (!empty($filters['unassigned'])) {
+			$where[] = '(q.assigned_designer_id IS NULL OR q.assigned_designer_id = 0)';
+		} elseif (isset($filters['designer_id']) && $filters['designer_id'] > 0) {
 			$where[] = 'q.assigned_designer_id = %d';
 			$prepare_args[] = (int) $filters['designer_id'];
+		}
+
+		if (!empty($filters['date_from'])) {
+			$where[] = 'q.submitted_at >= %s';
+			$prepare_args[] = sanitize_text_field($filters['date_from']) . ' 00:00:00';
+		}
+		if (!empty($filters['date_to'])) {
+			$where[] = 'q.submitted_at <= %s';
+			$prepare_args[] = sanitize_text_field($filters['date_to']) . ' 23:59:59';
 		}
 
 		$where_sql = implode(' AND ', $where);

@@ -49,8 +49,59 @@ $approvals_count = count($pending_approvals);
 		<?php if (current_user_can('bsp_manage_roster')) : ?>
 		<a href="<?php echo esc_url(\BattleSports\CustomerPortal\Portal::get_rosters_page_url()); ?>" class="bsp-portal__action bsp-portal__action--rosters"><?php esc_html_e('Manage Rosters', 'battle-sports-platform'); ?></a>
 		<?php endif; ?>
-		<a href="#" class="bsp-portal__action bsp-portal__action--queue"><?php esc_html_e('View Artwork Queue', 'battle-sports-platform'); ?></a>
+		<?php if (current_user_can('bsp_view_artwork_queue')) : ?>
+		<a href="<?php echo esc_url(\BattleSports\CustomerPortal\Portal::get_artwork_queue_page_url()); ?>" class="bsp-portal__action bsp-portal__action--queue"><?php esc_html_e('View Artwork Queue', 'battle-sports-platform'); ?></a>
+		<?php endif; ?>
 	</div>
+
+	<?php if (!empty($pending_approvals)) : ?>
+	<style>.bsp-portal-artwork__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem}.bsp-portal-artwork__item{border:1px solid #ddd;border-radius:8px;padding:1rem}.bsp-portal-artwork__thumbnail{max-width:100%;height:auto;display:block;border-radius:4px}.bsp-portal-artwork__actions{display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap}.bsp-portal-artwork__btn{padding:0.4rem 0.8rem;cursor:pointer;border-radius:4px;border:1px solid #ccc}.bsp-portal-artwork__btn--approve{background:#00a32a;color:#fff;border-color:#00a32a}.bsp-portal-artwork__revision-form{margin-top:0.75rem}.bsp-portal-artwork__revision-notes{width:100%;margin-top:0.25rem}.bsp-portal-artwork__revision-buttons{margin-top:0.5rem;display:flex;gap:0.5rem}.bsp-portal-artwork__message--error{color:#b32d2e}</style>
+	<div class="bsp-portal-artwork bsp-portal__section" data-empty-text="<?php echo esc_attr(__('No artwork pending approval.', 'battle-sports-platform')); ?>">
+		<h2 class="bsp-portal__section-title"><?php esc_html_e('My Artwork', 'battle-sports-platform'); ?></h2>
+		<p class="bsp-portal__section-desc"><?php esc_html_e('Review proofs and approve or request revisions.', 'battle-sports-platform'); ?></p>
+		<div class="bsp-portal-artwork__grid">
+			<?php foreach ($pending_approvals as $approval) : ?>
+			<?php
+			$proof_thumb = '';
+			if (!empty($approval->proof_attachment_id)) {
+				$proof_thumb = wp_get_attachment_image_url((int) $approval->proof_attachment_id, 'thumbnail');
+			}
+			$proof_url = $proof_thumb ?: (wp_get_attachment_url((int) ($approval->proof_attachment_id ?? 0)) ?: '');
+			?>
+			<div class="bsp-portal-artwork__item" data-artwork-id="<?php echo esc_attr((string) $approval->id); ?>">
+				<div class="bsp-portal-artwork__preview">
+					<?php if ($proof_thumb) : ?>
+					<img src="<?php echo esc_url($proof_thumb); ?>" alt="<?php echo esc_attr(sprintf(__('Proof for order %s', 'battle-sports-platform'), $approval->order_ref ?? '')); ?>" class="bsp-portal-artwork__thumbnail">
+					<?php elseif ($proof_url) : ?>
+					<a href="<?php echo esc_url($proof_url); ?>" target="_blank" rel="noopener" class="bsp-portal-artwork__link"><?php esc_html_e('View proof', 'battle-sports-platform'); ?></a>
+					<?php else : ?>
+					<span class="bsp-portal-artwork__no-preview"><?php esc_html_e('No preview', 'battle-sports-platform'); ?></span>
+					<?php endif; ?>
+				</div>
+				<div class="bsp-portal-artwork__info">
+					<strong><?php echo esc_html($approval->order_ref ?? ''); ?></strong>
+					<?php if (!empty($approval->product_type)) : ?>
+					<span class="bsp-portal-artwork__product"><?php echo esc_html($approval->product_type); ?></span>
+					<?php endif; ?>
+				</div>
+				<div class="bsp-portal-artwork__actions">
+					<button type="button" class="bsp-portal-artwork__btn bsp-portal-artwork__btn--approve"><?php esc_html_e('Approve', 'battle-sports-platform'); ?></button>
+					<button type="button" class="bsp-portal-artwork__btn bsp-portal-artwork__btn--revision"><?php esc_html_e('Request Revision', 'battle-sports-platform'); ?></button>
+				</div>
+				<div class="bsp-portal-artwork__revision-form" hidden>
+					<label for="bsp-revision-notes-<?php echo esc_attr((string) $approval->id); ?>" class="bsp-portal-artwork__revision-label"><?php esc_html_e('Revision notes', 'battle-sports-platform'); ?></label>
+					<textarea id="bsp-revision-notes-<?php echo esc_attr((string) $approval->id); ?>" class="bsp-portal-artwork__revision-notes" rows="3" placeholder="<?php esc_attr_e('Describe what changes you need...', 'battle-sports-platform'); ?>"></textarea>
+					<div class="bsp-portal-artwork__revision-buttons">
+						<button type="button" class="bsp-portal-artwork__btn bsp-portal-artwork__btn--revision-submit"><?php esc_html_e('Submit', 'battle-sports-platform'); ?></button>
+						<button type="button" class="bsp-portal-artwork__btn bsp-portal-artwork__btn--revision-cancel"><?php esc_html_e('Cancel', 'battle-sports-platform'); ?></button>
+					</div>
+				</div>
+				<p class="bsp-portal-artwork__message" role="status" aria-live="polite" hidden></p>
+			</div>
+			<?php endforeach; ?>
+		</div>
+	</div>
+	<?php endif; ?>
 
 	<?php if (!empty($recent_orders)) : ?>
 	<div class="bsp-portal__orders">

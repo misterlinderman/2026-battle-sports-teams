@@ -58,7 +58,7 @@ final class Dashboard {
     }
 
     /**
-     * Gets artwork items with status 'proof_sent' belonging to the user's teams.
+     * Gets artwork items with status 'proof_sent' belonging to the user's teams or orders.
      *
      * @param int $user_id WordPress user ID.
      * @return list<object>
@@ -71,11 +71,12 @@ final class Dashboard {
         $results = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT q.* FROM {$queue_table} q
-                INNER JOIN {$teams_table} t ON q.team_id = t.id
-                WHERE t.user_id = %d AND q.status = %s
+                LEFT JOIN {$teams_table} t ON q.team_id = t.id
+                WHERE q.status = %s AND (t.user_id = %d OR q.user_id = %d)
                 ORDER BY q.updated_at DESC",
+                'proof_sent',
                 $user_id,
-                'proof_sent'
+                $user_id
             ),
             OBJECT_K
         );

@@ -90,9 +90,12 @@ final class RestApi {
 				'permission_callback' => [$this, 'check_artwork_list_permission'],
 				'args'                => [
 					'status'      => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
-					'designer_id' => ['type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
+					'designer_id' => ['type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint'],
+					'unassigned'  => ['type' => 'string', 'enum' => ['1', 'true'], 'sanitize_callback' => 'sanitize_text_field'],
+					'date_from'   => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
+					'date_to'     => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
 					'page'        => ['type' => 'integer', 'minimum' => 1, 'default' => 1],
-					'per_page'    => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50, 'default' => 20],
+					'per_page'   => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50, 'default' => 20],
 				],
 			],
 		]);
@@ -663,17 +666,35 @@ final class RestApi {
 			'page'     => (int) $request->get_param('page'),
 			'per_page' => (int) $request->get_param('per_page'),
 		];
-		if ($request->get_param('status') !== null) {
+		if ($request->get_param('status') !== null && $request->get_param('status') !== '') {
 			$filters['status'] = (string) $request->get_param('status');
 		}
-		if ($request->get_param('designer_id') !== null && $request->get_param('designer_id') > 0) {
+		$unassigned = $request->get_param('unassigned');
+		if (in_array($unassigned, ['1', 'true'], true)) {
+			$filters['unassigned'] = true;
+		} elseif ($request->get_param('designer_id') !== null && $request->get_param('designer_id') > 0) {
 			$filters['designer_id'] = (int) $request->get_param('designer_id');
+		}
+		if ($request->get_param('date_from') !== null && $request->get_param('date_from') !== '') {
+			$filters['date_from'] = (string) $request->get_param('date_from');
+		}
+		if ($request->get_param('date_to') !== null && $request->get_param('date_to') !== '') {
+			$filters['date_to'] = (string) $request->get_param('date_to');
 		}
 
 		$result = $queue->get_queue($filters);
+		$items  = $result['items'];
+
+		foreach ($items as $item) {
+			$item->assigned_display_name = '';
+			if (!empty($item->assigned_designer_id)) {
+				$designer = get_userdata((int) $item->assigned_designer_id);
+				$item->assigned_display_name = $designer ? $designer->display_name : '';
+			}
+		}
 
 		return rest_ensure_response([
-			'items' => $result['items'],
+			'items' => $items,
 			'total' => $result['total'],
 		]);
 	}
@@ -709,11 +730,20 @@ final class RestApi {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function patch_artwork_status(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-		$queue = new \BattleSports\Artwork\ArtworkQueue();
+		$queue    = new \BattleSports\Artwork\ArtworkQueue();
+		$id       = (int) $request['id'];
+		$status   = (string) $request['status'];
+		$user_id  = get_current_user_id();
+
+		$row = $queue->get_by_id($id);
+		if ($row && $status === 'in_progress' && $row->status === 'in_queue' && $user_id > 0) {
+			$queue->assign_designer($id, $user_id);
+		}
+
 		$result = $queue->update_status(
-			(int) $request['id'],
-			(string) $request['status'],
-			get_current_user_id(),
+			$id,
+			$status,
+			$user_id,
 			(string) $request->get_param('notes')
 		);
 

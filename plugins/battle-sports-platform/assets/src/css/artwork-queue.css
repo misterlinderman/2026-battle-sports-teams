@@ -1,0 +1,24 @@
+/* Artwork queue — designer-facing interface */
+.bsp-artwork-queue__tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.bsp-artwork-queue__tab { padding: 0.5rem 1rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; }
+.bsp-artwork-queue__tab--active { background: #2271b1; color: #fff; border-color: #2271b1; }
+.bsp-artwork-queue__filters { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+.bsp-artwork-queue__filter-label { font-weight: 600; }
+.bsp-artwork-queue__table { width: 100%; border-collapse: collapse; }
+.bsp-artwork-queue__table th, .bsp-artwork-queue__table td { padding: 0.5rem; border: 1px solid #ddd; text-align: left; }
+.bsp-artwork-queue__badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85em; }
+.bsp-artwork-queue__badge--submitted { background: #f0f0f1; color: #50575e; }
+.bsp-artwork-queue__badge--in-queue { background: #e5f5fa; color: #0073aa; }
+.bsp-artwork-queue__badge--in-progress { background: #fff8e5; color: #996800; }
+.bsp-artwork-queue__badge--proof-sent { background: #e5f5f5; color: #006d6d; }
+.bsp-artwork-queue__badge--awaiting-revision { background: #fce8e8; color: #b32d2e; }
+.bsp-artwork-queue__badge--approved { background: #edfaef; color: #00a32a; }
+.bsp-artwork-queue__badge--complete { background: #d4edda; color: #155724; }
+.bsp-artwork-queue__btn { padding: 0.3rem 0.6rem; margin: 0 0.2rem 0.2rem 0; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
+.bsp-artwork-queue__btn--primary, .bsp-artwork-queue__btn--claim { background: #2271b1; color: #fff; border-color: #2271b1; }
+.bsp-artwork-queue__message--error { color: #b32d2e; }
+.bsp-artwork-queue__modal { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; }
+.bsp-artwork-queue__modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+.bsp-artwork-queue__modal-content { position: relative; background: #fff; padding: 1.5rem; border-radius: 8px; max-width: 400px; width: 90%; }
+.bsp-artwork-queue__modal-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
+.bsp-artwork-queue__upload-label { display: block; margin-bottom: 0.5rem; }
