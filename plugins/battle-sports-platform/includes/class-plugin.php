@@ -46,6 +46,7 @@ final class Plugin {
         add_action('init', [$this, 'load_post_types']);
         add_action('rest_api_init', [$this, 'load_rest_api']);
         add_action('init', [$this, 'load_portal']);
+        add_action('init', [$this, 'load_intake']);
     }
 
     /**
@@ -83,6 +84,15 @@ final class Plugin {
      */
     public function load_portal(): void {
         \BattleSports\CustomerPortal\Portal::init();
+    }
+
+    /**
+     * Loads intake form (multi-step order forms).
+     *
+     * @return void
+     */
+    public function load_intake(): void {
+        \BattleSports\Intake\IntakeForm::init();
     }
 
     /**
