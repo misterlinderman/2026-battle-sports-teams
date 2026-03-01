@@ -138,9 +138,9 @@ battle-sports-platform/
 
 ## AI Development Guidelines (Cursor + Claude)
 
-- Always read ARCHITECTURE.md before making structural changes
-- Update ARCHITECTURE.md when adding new files, CPTs, endpoints, or roles
-- Reference `gravityforms-export-2026-03-01.json` when rebuilding intake logic — all field
+- Always read docs/ARCHITECTURE.md before making structural changes
+- Update docs/ARCHITECTURE.md when adding new files, CPTs, endpoints, or roles
+- Reference `docs/gravityforms-export-2026-03-01.json` when rebuilding intake logic — all field
   labels, choices, and conditional logic are documented there
 - When building intake forms natively, mirror the existing GF field structure exactly before
   enhancing — backwards compat with existing submissions matters
