@@ -30,8 +30,9 @@ get_header();
 			<div class="bsp-catalog-grid" role="list">
 				<?php foreach ( $products as $product ) : ?>
 					<?php
-					$product_url = $base_url . $product['slug'] . '/';
-					$child_page = get_page_by_path( $product['slug'], OBJECT, 'page' );
+					$intake_slug = $product['intake_slug'] ?? $product['slug'];
+					$product_url = $base_url . $intake_slug . '/';
+					$child_page  = get_page_by_path( $intake_slug, OBJECT, 'page' );
 					if ( $child_page ) {
 						$product_url = get_permalink( $child_page );
 					}

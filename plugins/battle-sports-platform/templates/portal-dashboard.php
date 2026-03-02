@@ -45,7 +45,9 @@ $approvals_count = count($pending_approvals);
 	</div>
 
 	<div class="bsp-portal__actions">
-		<a href="#" class="bsp-portal__action bsp-portal__action--order"><?php esc_html_e('Start New Order', 'battle-sports-platform'); ?></a>
+		<a href="<?php echo esc_url( \BattleSports\CustomerPortal\Portal::get_add_team_page_url() ); ?>" class="bsp-portal__action bsp-portal__action--add-team"><?php esc_html_e('Add Team', 'battle-sports-platform'); ?></a>
+		<a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>" class="bsp-portal__action bsp-portal__action--logout"><?php esc_html_e('Log Out', 'battle-sports-platform'); ?></a>
+		<a href="<?php echo esc_url(home_url('/products/')); ?>" class="bsp-portal__action bsp-portal__action--order"><?php esc_html_e('Start New Order', 'battle-sports-platform'); ?></a>
 		<?php if (current_user_can('bsp_manage_roster')) : ?>
 		<a href="<?php echo esc_url(\BattleSports\CustomerPortal\Portal::get_rosters_page_url()); ?>" class="bsp-portal__action bsp-portal__action--rosters"><?php esc_html_e('Manage Rosters', 'battle-sports-platform'); ?></a>
 		<?php endif; ?>

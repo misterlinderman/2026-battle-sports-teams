@@ -22,6 +22,26 @@ final class RestApi {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		register_rest_route(self::NAMESPACE, '/programs', [
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [$this, 'get_programs'],
+				'permission_callback' => [$this, 'check_teams_read_permission'],
+			],
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [$this, 'create_program'],
+				'permission_callback' => [$this, 'check_teams_create_permission'],
+				'args'                => [
+					'name' => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
+			],
+		]);
+
 		register_rest_route(self::NAMESPACE, '/teams', [
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -393,6 +413,126 @@ final class RestApi {
 	}
 
 	/**
+	 * GET /programs
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_programs(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+		global $wpdb;
+		$programs_table = $wpdb->prefix . 'bsp_programs';
+		$teams_table = $wpdb->prefix . 'bsp_teams';
+		$rosters_table = $wpdb->prefix . 'bsp_rosters';
+		$user_id = get_current_user_id();
+
+		$programs = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, name FROM {$programs_table} WHERE user_id = %d ORDER BY name ASC",
+				$user_id
+			),
+			ARRAY_A
+		);
+
+		$response = [];
+		foreach ($programs ?: [] as $prog) {
+			$teams = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT t.id, t.team_name, t.primary_color, t.secondary_color, t.logo_attachment_id
+					FROM {$teams_table} t
+					WHERE t.program_id = %d
+					ORDER BY t.team_name ASC",
+					(int) $prog['id']
+				),
+				ARRAY_A
+			);
+
+			$teams_data = [];
+			foreach ($teams ?: [] as $t) {
+				$logo_url = !empty($t['logo_attachment_id']) ? (wp_get_attachment_image_url((int) $t['logo_attachment_id'], 'medium') ?: '') : '';
+				$player_count = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$rosters_table} WHERE team_id = %d", (int) $t['id']));
+				$teams_data[] = [
+					'id'             => (int) $t['id'],
+					'team_name'      => $t['team_name'],
+					'primary_color'  => $t['primary_color'] ?? '',
+					'secondary_color' => $t['secondary_color'] ?? '',
+					'logo_url'       => $logo_url,
+					'player_count'   => $player_count,
+				];
+			}
+
+			$response[] = [
+				'id'    => (int) $prog['id'],
+				'name'  => $prog['name'],
+				'teams' => $teams_data,
+			];
+		}
+
+		// Include teams without program_id (legacy) as a virtual "Other" program.
+		$orphan_teams = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT t.id, t.org_name, t.team_name, t.primary_color, t.secondary_color, t.logo_attachment_id
+				FROM {$teams_table} t
+				WHERE t.user_id = %d AND (t.program_id IS NULL OR t.program_id = 0)
+				ORDER BY t.team_name ASC",
+				$user_id
+			),
+			ARRAY_A
+		);
+
+		if (!empty($orphan_teams)) {
+			$teams_data = [];
+			foreach ($orphan_teams as $t) {
+				$logo_url = !empty($t['logo_attachment_id']) ? (wp_get_attachment_image_url((int) $t['logo_attachment_id'], 'medium') ?: '') : '';
+				$player_count = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$rosters_table} WHERE team_id = %d", (int) $t['id']));
+				$teams_data[] = [
+					'id'             => (int) $t['id'],
+					'team_name'      => $t['team_name'],
+					'org_name'       => $t['org_name'] ?? '',
+					'primary_color'  => $t['primary_color'] ?? '',
+					'secondary_color' => $t['secondary_color'] ?? '',
+					'logo_url'       => $logo_url,
+					'player_count'   => $player_count,
+				];
+			}
+			$response[] = [
+				'id'    => 0,
+				'name'  => __('Other', 'battle-sports-platform'),
+				'teams' => $teams_data,
+			];
+		}
+
+		return rest_ensure_response($response);
+	}
+
+	/**
+	 * POST /programs
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function create_program(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+		$name = trim((string) $request->get_param('name'));
+		if ($name === '') {
+			return new \WP_Error('rest_invalid_param', __('Program name is required.', 'battle-sports-platform'), ['status' => 400]);
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'bsp_programs';
+		$user_id = get_current_user_id();
+
+		$wpdb->insert($table, ['user_id' => $user_id, 'name' => $name], ['%d', '%s']);
+		if ($wpdb->last_error) {
+			return new \WP_Error('rest_insert_failed', $wpdb->last_error, ['status' => 500]);
+		}
+
+		return rest_ensure_response([
+			'id'    => (int) $wpdb->insert_id,
+			'name'  => $name,
+			'teams' => [],
+		]);
+	}
+
+	/**
 	 * GET /teams
 	 *
 	 * @param \WP_REST_Request $request Request object.
@@ -462,17 +602,29 @@ final class RestApi {
 		$table   = $wpdb->prefix . 'bsp_teams';
 		$user_id = get_current_user_id();
 
+		$program_id = isset($params['program_id']) && $params['program_id'] > 0 ? (int) $params['program_id'] : null;
+		$org_name = $params['org_name'];
+		if ($program_id) {
+			$prog = $wpdb->get_row($wpdb->prepare("SELECT name FROM {$wpdb->prefix}bsp_programs WHERE id = %d AND user_id = %d", $program_id, $user_id));
+			if ($prog) {
+				$org_name = $prog->name;
+			}
+		}
+		$logo_id = isset($params['logo_attachment_id']) && $params['logo_attachment_id'] > 0 ? (int) $params['logo_attachment_id'] : null;
+
 		$wpdb->insert(
 			$table,
 			[
-				'user_id'         => $user_id,
-				'org_name'        => $params['org_name'],
-				'team_name'       => $params['team_name'],
-				'age_group'       => $params['age_group'],
-				'primary_color'   => $params['primary_color'],
-				'secondary_color' => $params['secondary_color'],
+				'user_id'            => $user_id,
+				'program_id'         => $program_id,
+				'org_name'           => $org_name,
+				'team_name'          => $params['team_name'],
+				'age_group'          => $params['age_group'],
+				'primary_color'      => $params['primary_color'],
+				'secondary_color'    => $params['secondary_color'],
+				'logo_attachment_id' => $logo_id,
 			],
-			['%d', '%s', '%s', '%s', '%s', '%s']
+			['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d']
 		);
 
 		if ($wpdb->last_error) {
@@ -481,14 +633,16 @@ final class RestApi {
 
 		$team_id = (int) $wpdb->insert_id;
 
+		$logo_url = $logo_id ? (wp_get_attachment_image_url($logo_id, 'medium') ?: '') : '';
 		$created = [
 			'id'              => $team_id,
-			'org_name'        => $params['org_name'],
+			'program_id'      => $program_id,
+			'org_name'        => $org_name,
 			'team_name'       => $params['team_name'],
 			'age_group'       => $params['age_group'],
 			'primary_color'   => $params['primary_color'],
 			'secondary_color' => $params['secondary_color'],
-			'logo_url'        => '',
+			'logo_url'        => $logo_url,
 			'player_count'    => 0,
 		];
 
@@ -833,33 +987,46 @@ final class RestApi {
 	 */
 	private function get_team_schema(): array {
 		return [
-			'org_name'       => [
+			'program_id'        => [
+				'required'          => false,
+				'type'              => 'integer',
+				'default'           => 0,
+				'sanitize_callback' => 'absint',
+			],
+			'org_name'          => [
+				'required'          => false,
+				'type'              => 'string',
+				'default'           => '',
+				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'team_name'         => [
 				'required'          => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'team_name'      => [
-				'required'          => true,
-				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
-			],
-			'age_group'      => [
+			'age_group'         => [
 				'required'          => false,
 				'type'              => 'string',
 				'default'           => '',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'primary_color'  => [
+			'primary_color'     => [
 				'required'          => false,
 				'type'              => 'string',
 				'default'           => '',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'secondary_color' => [
+			'secondary_color'   => [
 				'required'          => false,
 				'type'              => 'string',
 				'default'           => '',
 				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'logo_attachment_id' => [
+				'required'          => false,
+				'type'              => 'integer',
+				'default'           => 0,
+				'sanitize_callback' => 'absint',
 			],
 		];
 	}
@@ -905,11 +1072,13 @@ final class RestApi {
 	 */
 	private function get_team_params(\WP_REST_Request $request): array {
 		return [
-			'org_name'       => (string) $request->get_param('org_name'),
-			'team_name'      => (string) $request->get_param('team_name'),
-			'age_group'      => (string) $request->get_param('age_group'),
-			'primary_color'  => (string) $request->get_param('primary_color'),
-			'secondary_color' => (string) $request->get_param('secondary_color'),
+			'program_id'       => (int) $request->get_param('program_id'),
+			'org_name'         => (string) $request->get_param('org_name'),
+			'team_name'        => (string) $request->get_param('team_name'),
+			'age_group'        => (string) $request->get_param('age_group'),
+			'primary_color'    => (string) $request->get_param('primary_color'),
+			'secondary_color'  => (string) $request->get_param('secondary_color'),
+			'logo_attachment_id' => (int) $request->get_param('logo_attachment_id'),
 		];
 	}
 
@@ -954,8 +1123,10 @@ final class RestApi {
 	 */
 	private function validate_team_params(array $params): array {
 		$errors = [];
-		if (trim($params['org_name'] ?? '') === '') {
-			$errors[] = __('org_name is required.', 'battle-sports-platform');
+		$program_id = (int) ($params['program_id'] ?? 0);
+		$org_name = trim($params['org_name'] ?? '');
+		if ($program_id <= 0 && $org_name === '') {
+			$errors[] = __('org_name or program_id is required.', 'battle-sports-platform');
 		}
 		if (trim($params['team_name'] ?? '') === '') {
 			$errors[] = __('team_name is required.', 'battle-sports-platform');

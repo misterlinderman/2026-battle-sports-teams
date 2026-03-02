@@ -62,6 +62,7 @@
         if (prevBtn) prevBtn.setAttribute('aria-hidden', n <= 1 ? 'true' : 'false');
         if (nextBtn) nextBtn.setAttribute('aria-hidden', n >= totalSteps ? 'true' : 'false');
         if (submitBtn) submitBtn.setAttribute('aria-hidden', n < totalSteps ? 'true' : 'false');
+        if (n >= totalSteps && submitBtn) submitBtn.focus();
     }
 
     function nextStep() {
@@ -145,6 +146,10 @@
         if (!pane) return true;
 
         pane.querySelectorAll('[data-validate]').forEach((field) => {
+            const conditional = field.closest('[data-condition-field], [data-conditional-for]');
+            if (conditional && (conditional.getAttribute('aria-hidden') === 'true' || conditional.classList.contains('bsp-intake__conditional--hidden'))) {
+                return;
+            }
             const rules = (field.dataset.validate || '').split(',').map((r) => r.trim()).filter(Boolean);
             if (rules.length === 0) return;
 

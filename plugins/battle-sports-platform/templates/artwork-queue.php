@@ -18,7 +18,11 @@ $portal_url  = $portal_page ? get_permalink($portal_page) : home_url('/portal/')
 ?>
 <div class="bsp-artwork-queue" id="bsp-artwork-queue">
 	<p class="bsp-artwork-queue__back">
+		<?php if (current_user_can('bsp_manage_roster')) : ?>
 		<a href="<?php echo esc_url($portal_url); ?>"><?php esc_html_e('← Back to Portal', 'battle-sports-platform'); ?></a>
+		<span aria-hidden="true"> · </span>
+		<?php endif; ?>
+		<a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>"><?php esc_html_e('Log Out', 'battle-sports-platform'); ?></a>
 	</p>
 
 	<h1 class="bsp-artwork-queue__title"><?php esc_html_e('Artwork Queue', 'battle-sports-platform'); ?></h1>

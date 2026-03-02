@@ -187,10 +187,6 @@ final class IntakeForm {
                     <?php echo esc_html($error); ?>
                 </div>
             <?php endif; ?>
-            <?php echo $nonce; ?>
-            <input type="hidden" name="bsp_intake_product" value="<?php echo esc_attr($product); ?>">
-            <input type="hidden" name="bsp_intake_state" id="bsp-intake-state" value="">
-            <input type="hidden" name="bsp_intake_step" id="bsp-intake-step" value="1">
 
             <div class="bsp-intake__progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="4" aria-label="Form progress">
                 <ol class="bsp-intake__steps">
@@ -213,7 +209,11 @@ final class IntakeForm {
                 </ol>
             </div>
 
-            <form class="bsp-intake__form" id="bsp-intake-form-element" method="post" enctype="multipart/form-data" novalidate>
+            <form class="bsp-intake__form" id="bsp-intake-form-element" method="post" action="" enctype="multipart/form-data" novalidate>
+                <?php echo $nonce; ?>
+                <input type="hidden" name="bsp_intake_product" value="<?php echo esc_attr($product); ?>">
+                <input type="hidden" name="bsp_intake_state" id="bsp-intake-state" value="">
+                <input type="hidden" name="bsp_intake_step" id="bsp-intake-step" value="1">
                 <div class="bsp-intake__panes">
                     <?php
                     $template_dir = BSP_PLUGIN_DIR . 'templates/intake/';

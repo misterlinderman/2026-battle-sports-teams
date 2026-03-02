@@ -15,6 +15,7 @@ defined('ABSPATH') || exit;
 
 $portal_page = get_page_by_path('portal', OBJECT, 'page');
 $portal_url  = $portal_page ? get_permalink($portal_page) : home_url('/portal/');
+$add_team_url = \BattleSports\CustomerPortal\Portal::get_add_team_page_url();
 ?>
 <div class="bsp-roster-manager">
 	<p class="bsp-roster-manager__back">
@@ -27,6 +28,15 @@ $portal_url  = $portal_page ? get_permalink($portal_page) : home_url('/portal/')
 		<select class="bsp-roster-manager__team-select" id="bsp-roster-team-select" aria-label="<?php esc_attr_e('Select team', 'battle-sports-platform'); ?>">
 			<option value=""><?php esc_html_e('— Select a team —', 'battle-sports-platform'); ?></option>
 		</select>
+		<p class="bsp-roster-manager__add-team-hint">
+			<?php
+			printf(
+				/* translators: %s: URL to add team page */
+				esc_html__('No teams yet? <a href="%s">Add a team</a>', 'battle-sports-platform'),
+				esc_url($add_team_url)
+			);
+			?>
+		</p>
 	</div>
 
 	<p class="bsp-roster-manager__message" role="status" aria-live="polite" hidden></p>

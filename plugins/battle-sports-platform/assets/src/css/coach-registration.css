@@ -1,0 +1,120 @@
+/**
+ * Battle Sports Platform — Coach registration form.
+ */
+
+.bsp-register {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+.bsp-register__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #000;
+}
+
+.bsp-register__intro {
+  margin-bottom: 1.5rem;
+  color: #374151;
+  font-size: 0.9375rem;
+}
+
+.bsp-register__error {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.375rem;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
+.bsp-register__section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bsp-register__section:last-of-type {
+  border-bottom: none;
+}
+
+.bsp-register__section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: #000;
+}
+
+.bsp-register__section-desc {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.bsp-register__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bsp-register__field label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: #374151;
+}
+
+.bsp-register__field .required {
+  color: #b91c1c;
+}
+
+.bsp-register__field input[type="text"],
+.bsp-register__field input[type="email"],
+.bsp-register__field input[type="password"] {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.bsp-register__field input[type="file"] {
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.bsp-register__hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.bsp-register__actions {
+  margin: 1.5rem 0 1rem;
+}
+
+.bsp-register__login-link,
+.bsp-register__register-link {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.bsp-register__login-link a,
+.bsp-register__register-link a {
+  color: var(--bsp-emphasis, #ceff00);
+  font-weight: 500;
+}
+
+.bsp-register--logged-in,
+.bsp-register--success {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.bsp-register--success p:first-of-type {
+  margin-bottom: 1rem;
+}

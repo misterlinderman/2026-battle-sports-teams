@@ -13,11 +13,11 @@ $post_slug = ( $queried instanceof WP_Post ) ? $queried->post_name : '';
 $product   = $post_slug ? bst_get_product_by_slug( $post_slug ) : null;
 
 if ( ! $product ) {
-	$product = bst_get_product_by_slug( 'battle-7v7' );
+	$product = bst_get_product_by_slug( '7v7' );
 }
 
-$order_url  = add_query_arg( 'product', $product['slug'], home_url( '/order/' ) );
-$contact_url = home_url( '/contact/' );
+$intake_slug = $product['intake_slug'] ?? $product['slug'];
+$contact_url  = home_url( '/contact/' );
 $colors   = $product['colors'] ?? array( 'Royal', 'Navy', 'Black', 'White', 'Red', 'Forest' );
 $styles   = $product['styles'] ?? array( 'Standard', 'Alternate', 'Compression' );
 $materials = $product['materials'] ?? array( 'Performance Mesh', 'Dri-FIT Polyester', 'Heavyweight Tackle Twill' );
@@ -74,11 +74,26 @@ get_header();
 				</section>
 
 				<div class="bsp-product-actions">
-					<a href="<?php echo esc_url( $order_url ); ?>" class="bsp-btn-primary bsp-btn-primary--lg">Start Your Order</a>
+					<a href="#order-form" class="bsp-btn-primary bsp-btn-primary--lg">Start Your Order</a>
 					<a href="<?php echo esc_url( $contact_url ); ?>" class="bsp-btn-secondary">Need Help?</a>
 				</div>
 			</div>
 		</div>
+
+		<?php
+		$page_post = get_queried_object();
+		if ( $page_post instanceof WP_Post && ! empty( $page_post->post_content ) ) :
+			?>
+		<section id="order-form" class="bsp-product-order">
+			<?php
+			global $post;
+			$post = $page_post;
+			setup_postdata( $post );
+			the_content();
+			wp_reset_postdata();
+			?>
+		</section>
+		<?php endif; ?>
 	</div>
 </main>
 

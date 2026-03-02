@@ -18,7 +18,7 @@ final class IntakeHandler {
      * @return void
      */
     public static function init(): void {
-        add_action('init', [self::class, 'maybe_handle_submission'], 5);
+        // maybe_handle_submission is registered in Plugin::register_hooks() at init priority 5
         add_action('woocommerce_order_status_changed', [self::class, 'on_order_status_changed'], 10, 3);
     }
 

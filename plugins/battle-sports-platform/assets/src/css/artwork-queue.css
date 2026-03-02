@@ -151,6 +151,11 @@
   justify-content: center;
 }
 
+/* Ensure modal is hidden when [hidden] attribute is set — CSS display:flex overrides UA [hidden] */
+.bsp-artwork-queue__modal[hidden] {
+  display: none !important;
+}
+
 .bsp-artwork-queue__modal-backdrop {
   position: absolute;
   inset: 0;

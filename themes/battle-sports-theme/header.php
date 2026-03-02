@@ -46,17 +46,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 						)
 					);
 				} else {
-					$products_page = get_page_by_path( 'products', OBJECT, 'page' );
-					$products_url  = $products_page ? get_permalink( $products_page ) : home_url( '/products/' );
-					$portal_page   = get_page_by_path( 'portal', OBJECT, 'page' );
-					$portal_url    = $portal_page ? get_permalink( $portal_page ) : home_url( '/portal/' );
-					$contact_page  = get_page_by_path( 'contact', OBJECT, 'page' );
-					$contact_url   = $contact_page ? get_permalink( $contact_page ) : home_url( '/contact/' );
+					$products_page  = get_page_by_path( 'products', OBJECT, 'page' );
+					$products_url   = $products_page ? get_permalink( $products_page ) : home_url( '/products/' );
+					$portal_page    = get_page_by_path( 'portal', OBJECT, 'page' );
+					$portal_url     = $portal_page ? get_permalink( $portal_page ) : home_url( '/portal/' );
+					$register_page  = get_page_by_path( 'register', OBJECT, 'page' );
+					$register_url   = $register_page ? get_permalink( $register_page ) : home_url( '/register/' );
+					$login_page     = get_page_by_path( 'login', OBJECT, 'page' );
+					$login_url      = $login_page ? get_permalink( $login_page ) : home_url( '/login/' );
+					$contact_page   = get_page_by_path( 'contact', OBJECT, 'page' );
+					$contact_url    = $contact_page ? get_permalink( $contact_page ) : home_url( '/contact/' );
+					$is_logged_in   = is_user_logged_in();
 					?>
 					<ul class="primary-nav__menu" id="primary-nav-menu">
 						<li><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'battle-sports' ); ?></a></li>
 						<li><a href="<?php echo esc_url( $products_url ); ?>"><?php esc_html_e( 'Products', 'battle-sports' ); ?></a></li>
+						<?php if ( $is_logged_in ) : ?>
 						<li><a href="<?php echo esc_url( $portal_url ); ?>"><?php esc_html_e( 'My Portal', 'battle-sports' ); ?></a></li>
+						<li><a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Log Out', 'battle-sports' ); ?></a></li>
+						<?php else : ?>
+						<li><a href="<?php echo esc_url( $register_url ); ?>"><?php esc_html_e( 'Create Account', 'battle-sports' ); ?></a></li>
+						<li><a href="<?php echo esc_url( $login_url ); ?>"><?php esc_html_e( 'Log In', 'battle-sports' ); ?></a></li>
+						<?php endif; ?>
 						<li><a href="<?php echo esc_url( $contact_url ); ?>"><?php esc_html_e( 'Contact', 'battle-sports' ); ?></a></li>
 					</ul>
 				<?php } ?>

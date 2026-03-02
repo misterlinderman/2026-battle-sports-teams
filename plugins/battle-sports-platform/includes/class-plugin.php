@@ -47,7 +47,14 @@ final class Plugin {
         add_action('rest_api_init', [$this, 'load_rest_api']);
         add_action('init', [$this, 'load_portal']);
         add_action('init', [$this, 'load_intake']);
-        add_action('admin_menu', [$this, 'load_admin']);
+        $this->load_admin();
+
+        // Register POST handlers on init at priority 5.
+        // These must be registered at plugins_loaded; if added from within init,
+        // they would never run in the same request (WordPress fires init once).
+        add_action('init', [\BattleSports\CustomerPortal\CoachRegistration::class, 'handle_submission'], 5);
+        add_action('init', [\BattleSports\CustomerPortal\AddTeam::class, 'handle_submission'], 5);
+        add_action('init', [\BattleSports\Intake\IntakeHandler::class, 'maybe_handle_submission'], 5);
     }
 
     /**
@@ -85,6 +92,8 @@ final class Plugin {
      */
     public function load_portal(): void {
         \BattleSports\CustomerPortal\Portal::init();
+        \BattleSports\CustomerPortal\CoachRegistration::init();
+        \BattleSports\CustomerPortal\AddTeam::init();
     }
 
     /**

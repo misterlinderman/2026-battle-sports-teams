@@ -81,14 +81,33 @@ function bst_enqueue_assets(): void {
 add_action( 'wp_enqueue_scripts', 'bst_enqueue_assets' );
 
 /**
+ * Appends Log Out link to primary nav when user is logged in.
+ *
+ * @param string   $items HTML for nav items.
+ * @param stdClass $args  Nav menu args.
+ * @return string
+ */
+function bst_append_logout_to_nav( string $items, $args ): string {
+	if ( isset( $args->theme_location ) && $args->theme_location === 'primary' && is_user_logged_in() ) {
+		$items .= '<li><a href="' . esc_url( wp_logout_url( home_url( '/' ) ) ) . '">' . esc_html__( 'Log Out', 'battle-sports' ) . '</a></li>';
+	}
+	return $items;
+}
+add_filter( 'wp_nav_menu_items', 'bst_append_logout_to_nav', 10, 2 );
+
+/**
  * Returns catalog product lines for the product catalog template.
  *
- * @return array<int, array{slug: string, name: string, sport: string, description: string, colors: array<string>, styles: array<string>, materials: array<string>}>
+ * intake_slug: Used for page URLs and [bsp_intake_form product="X"]. Must match
+ * the slug of child pages under /products/ and the intake form product attribute.
+ *
+ * @return array<int, array{slug: string, intake_slug: string, name: string, sport: string, description: string, colors: array<string>, styles: array<string>, materials: array<string>}>
  */
 function bst_get_catalog_products(): array {
 	return array(
 		array(
 			'slug'        => 'battle-7v7',
+			'intake_slug' => '7v7',
 			'name'        => 'Battle 7v7',
 			'sport'       => 'Flag Football',
 			'description' => 'Jerseys and shorts built for 7-on-7 flag football. Lightweight, breathable, built to move.',
@@ -98,6 +117,7 @@ function bst_get_catalog_products(): array {
 		),
 		array(
 			'slug'        => 'battle-flag',
+			'intake_slug' => 'flag',
 			'name'        => 'Battle Flag',
 			'sport'       => 'Flag Football',
 			'description' => 'Premium flag football jerseys and shorts with a women\'s variant. Designed for speed and agility.',
@@ -107,6 +127,7 @@ function bst_get_catalog_products(): array {
 		),
 		array(
 			'slug'        => 'battle-womens-flag',
+			'intake_slug' => 'womens-flag',
 			'name'        => 'Battle Women\'s Flag',
 			'sport'       => 'Flag Football',
 			'description' => 'Dedicated women\'s flag football uniforms. Athletic cut, performance fabrics, built for the game.',
@@ -116,6 +137,7 @@ function bst_get_catalog_products(): array {
 		),
 		array(
 			'slug'        => 'battle-charlie-tackle',
+			'intake_slug' => 'charlie-tackle',
 			'name'        => 'Battle Charlie Tackle',
 			'sport'       => 'Tackle Football',
 			'description' => 'Jerseys and pants with custom logo and stripe options. Durability meets style.',
@@ -125,6 +147,7 @@ function bst_get_catalog_products(): array {
 		),
 		array(
 			'slug'        => 'battle-alpha-tackle',
+			'intake_slug' => 'alpha-tackle',
 			'name'        => 'Battle Alpha Tackle',
 			'sport'       => 'Tackle Football',
 			'description' => 'Premium tackle jerseys and pants with tackle twill upgrade option. Pro-level performance.',
@@ -134,6 +157,7 @@ function bst_get_catalog_products(): array {
 		),
 		array(
 			'slug'        => 'battle-bravo-tackle',
+			'intake_slug' => 'bravo-tackle',
 			'name'        => 'Battle Bravo Tackle',
 			'sport'       => 'Tackle Football',
 			'description' => 'High-performance tackle football jerseys and pants. Built for the trenches.',
@@ -173,12 +197,16 @@ function bst_get_swatch_color( string $name ): string {
 /**
  * Returns a single product by slug, or null if not found.
  *
- * @param string $slug Product slug (e.g. battle-7v7).
- * @return array{slug: string, name: string, sport: string, description: string, colors: array<string>, styles: array<string>, materials: array<string>}|null
+ * Accepts both catalog slug (battle-7v7) and intake/page slug (7v7, bravo-tackle)
+ * so product detail pages and catalog links resolve correctly.
+ *
+ * @param string $slug Product slug (e.g. battle-7v7 or 7v7).
+ * @return array{slug: string, intake_slug?: string, name: string, sport: string, description: string, colors: array<string>, styles: array<string>, materials: array<string>}|null
  */
 function bst_get_product_by_slug( string $slug ): ?array {
 	foreach ( bst_get_catalog_products() as $product ) {
-		if ( $product['slug'] === $slug ) {
+		$intake_slug = $product['intake_slug'] ?? $product['slug'];
+		if ( $product['slug'] === $slug || $intake_slug === $slug ) {
 			$product['colors']   = $product['colors'] ?? array( 'Royal', 'Navy', 'Black', 'White', 'Red', 'Forest' );
 			$product['styles']   = $product['styles'] ?? array( 'Standard', 'Alternate', 'Compression' );
 			$product['materials'] = $product['materials'] ?? array( 'Performance Mesh', 'Dri-FIT Polyester', 'Heavyweight Tackle Twill' );

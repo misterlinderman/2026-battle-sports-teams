@@ -25,7 +25,9 @@ final class AdminSettings {
      */
     public static function init(): void {
         add_action('admin_menu', [self::class, 'add_menu_page']);
+        add_action('admin_bar_menu', [self::class, 'add_admin_bar_link'], 80);
         add_action('admin_init', [self::class, 'handle_reset_product']);
+        add_action('admin_init', [self::class, 'handle_create_missing_pages']);
         add_action('admin_init', [self::class, 'handle_integrations_save']);
         add_action('admin_init', [self::class, 'handle_appearance_save']);
         add_action('wp_ajax_bsp_test_monday_connection', [self::class, 'ajax_test_monday_connection']);
@@ -45,8 +47,26 @@ final class AdminSettings {
             self::MENU_SLUG,
             [self::class, 'render_page'],
             'dashicons-store',
-            30
+            29
         );
+    }
+
+    /**
+     * Adds Battle Sports link to the admin bar for administrators.
+     *
+     * @param \WP_Admin_Bar $wp_admin_bar Admin bar instance.
+     * @return void
+     */
+    public static function add_admin_bar_link(\WP_Admin_Bar $wp_admin_bar): void {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        $wp_admin_bar->add_node([
+            'id'    => 'battle-sports',
+            'title' => __('Battle Sports', 'battle-sports-platform'),
+            'href'  => admin_url('admin.php?page=' . self::MENU_SLUG),
+            'meta'  => ['title' => __('Battle Sports Settings', 'battle-sports-platform')],
+        ]);
     }
 
     /**
@@ -73,6 +93,33 @@ final class AdminSettings {
             'battle_sports_settings',
             'bsp_submission_fee_reset',
             __('Submission fee product has been recreated.', 'battle-sports-platform'),
+            'success'
+        );
+    }
+
+    /**
+     * Handles "Create Missing Pages" button.
+     *
+     * @return void
+     */
+    public static function handle_create_missing_pages(): void {
+        if (!isset($_POST['bsp_create_missing_pages']) || !wp_verify_nonce(
+            isset($_POST['_wpnonce']) ? sanitize_text_field(wp_unslash($_POST['_wpnonce'])) : '',
+            'bsp_create_missing_pages'
+        )) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        \BattleSports\CustomerPortal\CoachRegistration::create_pages_on_activation();
+
+        add_settings_error(
+            'battle_sports_settings',
+            'bsp_pages_created',
+            __('Missing portal pages (Add Team, etc.) have been created.', 'battle-sports-platform'),
             'success'
         );
     }
@@ -179,7 +226,7 @@ final class AdminSettings {
      */
     public static function ajax_test_monday_connection(): void {
         check_ajax_referer('bsp_test_monday', 'nonce');
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('read')) {
             wp_send_json_error(['message' => __('Permission denied.', 'battle-sports-platform')]);
         }
 
@@ -298,6 +345,20 @@ final class AdminSettings {
                                         <?php esc_html_e('Reset Product', 'battle-sports-platform'); ?>
                                     </button>
                                 </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Portal Pages', 'battle-sports-platform'); ?></th>
+                            <td>
+                                <p class="description">
+                                    <?php esc_html_e('If the Add Team page (or other portal pages) is missing or returns 404, click below to create them.', 'battle-sports-platform'); ?>
+                                </p>
+                                <form method="post" style="display:inline;">
+                                    <?php wp_nonce_field('bsp_create_missing_pages'); ?>
+                                    <button type="submit" name="bsp_create_missing_pages" class="button button-secondary">
+                                        <?php esc_html_e('Create Missing Pages', 'battle-sports-platform'); ?>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     </tbody>

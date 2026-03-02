@@ -156,6 +156,81 @@ $emphasis: var(--bsp-emphasis, $color-emphasis);
   color: $color-charcoal;
 }
 
+.bsp-hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+
+  .bsp-btn-primary--lg {
+    width: auto;
+  }
+
+  .bsp-btn-secondary {
+    width: auto;
+    margin-top: 0;
+  }
+}
+
+// Home features
+.bsp-home-features {
+  padding-block: 3rem;
+
+  @media (min-width: $breakpoint-md) {
+    padding-block: 4rem;
+  }
+}
+
+.bsp-home-features__title {
+  font-family: $font-primary;
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: $color-text;
+}
+
+.bsp-home-features__grid {
+  display: grid;
+  gap: 2rem;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.bsp-home-features__item {
+  padding: 1.5rem;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+
+  h3 {
+    font-size: $font-size-lg;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: $color-text;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    line-height: $line-height-relaxed;
+    margin-bottom: 1rem;
+  }
+}
+
+.bsp-home-features__link {
+  font-weight: 600;
+  color: $emphasis;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 // Product card — white bg, light border, emphasis CTA
 .bsp-product-card {
   background: $color-bg;

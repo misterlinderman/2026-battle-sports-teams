@@ -18,6 +18,9 @@ final class Portal {
     private const SHORTCODE_ROSTER = 'bsp_roster_manager';
     private const SHORTCODE_ARTWORK_QUEUE = 'bsp_artwork_queue';
 
+    /** Login page shortcode (frontend, not wp-admin). */
+    public const SHORTCODE_LOGIN = 'bsp_login';
+
     /**
      * Initializes the portal and registers the shortcode.
      *
@@ -27,6 +30,83 @@ final class Portal {
         add_shortcode(self::SHORTCODE, [self::class, 'render']);
         add_shortcode(self::SHORTCODE_ROSTER, [self::class, 'render_roster_manager']);
         add_shortcode(self::SHORTCODE_ARTWORK_QUEUE, [self::class, 'render_artwork_queue']);
+        add_shortcode(self::SHORTCODE_LOGIN, [self::class, 'render_login_page']);
+        add_action('template_redirect', [self::class, 'redirect_bsp_roles_from_my_account']);
+    }
+
+    /**
+     * Redirects coach/designer users from WooCommerce my-account to the Battle Sports portal.
+     *
+     * @return void
+     */
+    public static function redirect_bsp_roles_from_my_account(): void {
+        if (!is_user_logged_in()) {
+            return;
+        }
+        if (!current_user_can('bsp_view_portal')) {
+            return;
+        }
+        if (!function_exists('is_account_page') || !is_account_page()) {
+            return;
+        }
+        $portal = get_page_by_path('portal', OBJECT, 'page');
+        if (!$portal) {
+            return;
+        }
+        wp_safe_redirect(get_permalink($portal));
+        exit;
+    }
+
+    /**
+     * Renders the standalone login page (not wp-admin).
+     *
+     * @param array<string, string> $atts Shortcode attributes.
+     * @return string
+     */
+    public static function render_login_page(array $atts = []): string {
+        if (is_user_logged_in() && current_user_can('bsp_view_portal')) {
+            $portal = get_page_by_path('portal', OBJECT, 'page');
+            $url = $portal ? get_permalink($portal) : home_url('/portal/');
+            return '<div class="bsp-login bsp-login--logged-in">' .
+                '<p>' . esc_html__('You are already logged in.', 'battle-sports-platform') . '</p>' .
+                '<p><a href="' . esc_url($url) . '" class="bsp-btn-primary">' . esc_html__('Go to My Portal', 'battle-sports-platform') . '</a></p>' .
+                '</div>';
+        }
+
+        $portal = get_page_by_path('portal', OBJECT, 'page');
+        $redirect = $portal ? get_permalink($portal) : home_url('/portal/');
+        $login = wp_login_form([
+            'echo'             => false,
+            'redirect'         => $redirect,
+            'form_id'          => 'bsp-login-form',
+            'label_username'   => __('Email or Username', 'battle-sports-platform'),
+            'label_password'   => __('Password', 'battle-sports-platform'),
+            'label_remember'   => __('Remember Me', 'battle-sports-platform'),
+            'label_log_in'     => __('Log In', 'battle-sports-platform'),
+            'remember'         => true,
+        ]);
+
+        $register_page = get_page_by_path('register', OBJECT, 'page');
+        $register_url = $register_page ? get_permalink($register_page) : home_url('/register/');
+
+        wp_enqueue_style(
+            'bsp-login',
+            BSP_PLUGIN_URL . 'assets/src/css/login.css',
+            [],
+            BSP_VERSION
+        );
+
+        return '<div class="bsp-login">' .
+            '<h1 class="bsp-login__title">' . esc_html__('Log In', 'battle-sports-platform') . '</h1>' .
+            '<p class="bsp-login__message">' . esc_html__('Log in to manage your programs, teams, and rosters.', 'battle-sports-platform') . '</p>' .
+            $login .
+            '<p class="bsp-login__register-link">' .
+            sprintf(
+                /* translators: %s: URL to registration page */
+                __('Don\'t have an account? <a href="%s">Create one</a>', 'battle-sports-platform'),
+                esc_url($register_url)
+            ) . '</p>' .
+            '</div>';
     }
 
     /**
@@ -94,9 +174,16 @@ final class Portal {
     /**
      * Renders the portal dashboard.
      *
+     * Designers (artwork queue only, no roster) are redirected to the artwork queue as their primary dashboard.
+     *
      * @return string
      */
     private static function render_dashboard(): string {
+        if (current_user_can('bsp_view_artwork_queue') && !current_user_can('bsp_manage_roster')) {
+            wp_safe_redirect(self::get_artwork_queue_page_url());
+            exit;
+        }
+
         $user_id = get_current_user_id();
         $dashboard = new Dashboard();
         $teams = $dashboard->get_user_teams($user_id);
@@ -272,6 +359,31 @@ final class Portal {
             }
         }
         return home_url('/portal/rosters/');
+    }
+
+    /**
+     * Gets the add-team page URL.
+     *
+     * @return string
+     */
+    public static function get_add_team_page_url(): string {
+        $portal = get_page_by_path('portal', OBJECT, 'page');
+        if (!$portal) {
+            return home_url('/portal/add-team/');
+        }
+        $children = get_pages(
+            [
+                'parent'      => $portal->ID,
+                'post_status' => 'publish',
+                'number'      => 50,
+            ]
+        );
+        foreach ($children ?: [] as $child) {
+            if ($child->post_name === 'add-team') {
+                return get_permalink($child);
+            }
+        }
+        return home_url('/portal/add-team/');
     }
 
     /**

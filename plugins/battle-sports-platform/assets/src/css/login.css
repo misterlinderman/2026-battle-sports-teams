@@ -1,0 +1,57 @@
+/**
+ * Battle Sports Platform — Standalone login page.
+ */
+
+.bsp-login {
+  max-width: 24rem;
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+.bsp-login__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #000;
+}
+
+.bsp-login__message {
+  margin-bottom: 1.5rem;
+  color: #374151;
+  font-size: 0.9375rem;
+}
+
+.bsp-login #bsp-login-form label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.bsp-login #bsp-login-form input[type="text"],
+.bsp-login #bsp-login-form input[type="password"] {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+}
+
+.bsp-login #bsp-login-form p.submit {
+  margin-top: 1rem;
+}
+
+.bsp-login__register-link {
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.bsp-login__register-link a {
+  color: var(--bsp-emphasis, #ceff00);
+  font-weight: 500;
+}
+
+.bsp-login--logged-in {
+  text-align: center;
+  padding: 3rem 0;
+}
