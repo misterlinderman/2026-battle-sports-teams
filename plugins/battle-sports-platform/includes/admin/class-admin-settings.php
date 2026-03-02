@@ -15,6 +15,8 @@ final class AdminSettings {
 
     private const MENU_SLUG = 'battle-sports-settings';
     private const OPTION_GROUP = 'battle_sports_settings';
+    private const OPTION_EMPHASIS_COLOR = 'bsp_emphasis_color';
+    private const DEFAULT_EMPHASIS_COLOR = '#ceff00';
 
     /**
      * Registers admin menu and settings.
@@ -25,7 +27,9 @@ final class AdminSettings {
         add_action('admin_menu', [self::class, 'add_menu_page']);
         add_action('admin_init', [self::class, 'handle_reset_product']);
         add_action('admin_init', [self::class, 'handle_integrations_save']);
+        add_action('admin_init', [self::class, 'handle_appearance_save']);
         add_action('wp_ajax_bsp_test_monday_connection', [self::class, 'ajax_test_monday_connection']);
+        add_action('wp_head', [self::class, 'output_emphasis_css'], 5);
     }
 
     /**
@@ -69,6 +73,51 @@ final class AdminSettings {
             'battle_sports_settings',
             'bsp_submission_fee_reset',
             __('Submission fee product has been recreated.', 'battle-sports-platform'),
+            'success'
+        );
+    }
+
+    /**
+     * Outputs emphasis color as CSS custom property in head.
+     *
+     * @return void
+     */
+    public static function output_emphasis_css(): void {
+        $color = get_option(self::OPTION_EMPHASIS_COLOR, self::DEFAULT_EMPHASIS_COLOR);
+        $color = sanitize_hex_color($color) ?: self::DEFAULT_EMPHASIS_COLOR;
+        echo '<style id="bsp-emphasis-color">:root{--bsp-emphasis:' . esc_attr($color) . ';}</style>' . "\n";
+    }
+
+    /**
+     * Handles Appearance tab form save.
+     *
+     * @return void
+     */
+    public static function handle_appearance_save(): void {
+        if (!isset($_POST['bsp_appearance_save']) || !wp_verify_nonce(
+            isset($_POST['_wpnonce']) ? sanitize_text_field(wp_unslash($_POST['_wpnonce'])) : '',
+            'bsp_appearance_save'
+        )) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $color = isset($_POST['bsp_emphasis_color']) ? sanitize_hex_color(sanitize_text_field(wp_unslash($_POST['bsp_emphasis_color']))) : '';
+        if (!$color && isset($_POST['bsp_emphasis_color_hex'])) {
+            $hex = sanitize_text_field(wp_unslash($_POST['bsp_emphasis_color_hex']));
+            $color = preg_match('/^#[0-9A-Fa-f]{6}$/', $hex) ? $hex : sanitize_hex_color($hex);
+        }
+        if ($color) {
+            update_option(self::OPTION_EMPHASIS_COLOR, $color);
+        }
+
+        add_settings_error(
+            'battle_sports_settings',
+            'bsp_appearance_saved',
+            __('Appearance settings saved.', 'battle-sports-platform'),
             'success'
         );
     }
@@ -160,6 +209,10 @@ final class AdminSettings {
                    class="nav-tab <?php echo $tab === 'general' ? 'nav-tab-active' : ''; ?>">
                     <?php esc_html_e('General', 'battle-sports-platform'); ?>
                 </a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::MENU_SLUG . '&tab=appearance')); ?>"
+                   class="nav-tab <?php echo $tab === 'appearance' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e('Appearance', 'battle-sports-platform'); ?>
+                </a>
                 <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::MENU_SLUG . '&tab=integrations')); ?>"
                    class="nav-tab <?php echo $tab === 'integrations' ? 'nav-tab-active' : ''; ?>">
                     <?php esc_html_e('Integrations', 'battle-sports-platform'); ?>
@@ -170,6 +223,8 @@ final class AdminSettings {
 
             <?php if ($tab === 'integrations') : ?>
                 <?php self::render_integrations_tab(); ?>
+            <?php elseif ($tab === 'appearance') : ?>
+                <?php self::render_appearance_tab(); ?>
             <?php else : ?>
                 <?php self::render_general_tab(); ?>
             <?php endif; ?>
@@ -248,6 +303,57 @@ final class AdminSettings {
                     </tbody>
                 </table>
             </form>
+        <?php
+    }
+
+    /**
+     * Renders the Appearance tab (emphasis color).
+     *
+     * @return void
+     */
+    private static function render_appearance_tab(): void {
+        $emphasis = get_option(self::OPTION_EMPHASIS_COLOR, self::DEFAULT_EMPHASIS_COLOR);
+        ?>
+        <form method="post" action="">
+            <?php wp_nonce_field('bsp_appearance_save'); ?>
+            <input type="hidden" name="bsp_appearance_save" value="1">
+
+            <h2><?php esc_html_e('Brand Colors', 'battle-sports-platform'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Emphasis color is used for key CTAs and interactive elements across the site.', 'battle-sports-platform'); ?>
+            </p>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><?php esc_html_e('Emphasis Color', 'battle-sports-platform'); ?></th>
+                    <td>
+                        <input type="color" name="bsp_emphasis_color" id="bsp-emphasis-color" value="<?php echo esc_attr($emphasis); ?>" style="width:4rem;height:2rem;vertical-align:middle;cursor:pointer;">
+                        <input type="text" name="bsp_emphasis_color_hex" id="bsp-emphasis-hex" value="<?php echo esc_attr($emphasis); ?>" class="regular-text" maxlength="7" placeholder="#ceff00" style="max-width:8rem;margin-left:0.5rem;">
+                        <p class="description"><?php esc_html_e('Hex color for buttons, links, and key actions. Default: #ceff00', 'battle-sports-platform'); ?></p>
+                    </td>
+                </tr>
+            </table>
+
+            <p class="submit">
+                <input type="submit" name="bsp_appearance_save" class="button button-primary"
+                       value="<?php esc_attr_e('Save Appearance', 'battle-sports-platform'); ?>">
+            </p>
+        </form>
+        <script>
+        (function(){
+            var color = document.getElementById('bsp-emphasis-color');
+            var hex = document.getElementById('bsp-emphasis-hex');
+            if (!color || !hex) return;
+            color.addEventListener('input', function(){ hex.value = this.value; });
+            hex.addEventListener('input', function(){
+                var v = this.value;
+                if (/^#[0-9A-Fa-f]{6}$/.test(v)) color.value = v;
+            });
+            hex.addEventListener('change', function(){
+                var v = this.value;
+                if (v && v.charAt(0) !== '#') this.value = '#' + v;
+            });
+        })();
+        </script>
         <?php
     }
 

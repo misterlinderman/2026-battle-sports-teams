@@ -12,8 +12,8 @@ body.nav-open {
   left: 0;
   z-index: 1000;
   padding: 0.5rem 1rem;
-  background: $color-primary;
-  color: $color-light;
+  background: $color-text;
+  color: $color-bg;
   font-weight: 600;
 
   &:focus {
@@ -29,7 +29,7 @@ body.nav-open {
   overflow: hidden;
 }
 
-// Grid & container
+// Grid & container — Shop-style clean structure
 .container {
   width: 100%;
   max-width: $breakpoint-xl;
@@ -39,13 +39,18 @@ body.nav-open {
   @media (min-width: $breakpoint-md) {
     padding-inline: 1.5rem;
   }
+
+  @media (min-width: $breakpoint-lg) {
+    padding-inline: 2rem;
+  }
 }
 
-// Site header
+// Site header — white bg, black text, light grey separation
 .site-header {
-  background: $color-primary;
-  color: $color-light;
+  background: $color-bg;
+  color: $color-text;
   padding-block: 1rem;
+  border-bottom: 1px solid $color-border;
 }
 
 .site-header__inner {
@@ -64,34 +69,34 @@ body.nav-open {
   text-decoration: none;
 
   &:hover {
-    color: $color-accent;
+    color: var(--bsp-emphasis, $color-emphasis);
     text-decoration: none;
   }
 }
 
 .site-branding__name {
-  font-family: $font-display;
+  font-family: $font-primary;
   font-size: $font-size-2xl;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0rem;
 }
 
 .site-branding__description {
   display: block;
   font-size: $font-size-sm;
-  opacity: 0.9;
+  color: $color-text-muted;
 }
 
 .primary-nav {
   position: relative;
 }
 
-// Backdrop: hidden by default, visible when drawer is open
 .primary-nav__backdrop {
   display: none;
   position: fixed;
   inset: 0;
   z-index: 998;
-  background: rgba($color-dark, 0.5);
+  background: rgba($color-text, 0.4);
   border: none;
   cursor: pointer;
   opacity: 0;
@@ -107,7 +112,6 @@ body.nav-open {
   opacity: 1;
 }
 
-// Drawer: slide-out from right on mobile
 .primary-nav__drawer {
   @media (max-width: #{$breakpoint-md - 1px}) {
     position: fixed;
@@ -116,13 +120,14 @@ body.nav-open {
     bottom: 0;
     width: min(320px, 85vw);
     z-index: 999;
-    background: $color-primary;
+    background: $color-bg;
     padding: 2rem 1.5rem;
     padding-top: 4rem;
     transform: translateX(100%);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
-    box-shadow: -8px 0 32px rgba($color-dark, 0.2);
+    box-shadow: -8px 0 32px rgba($color-text, 0.1);
+    border-left: 1px solid $color-border;
   }
 
   .primary-nav.is-open & {
@@ -157,7 +162,7 @@ body.nav-open {
 }
 
 .primary-nav__drawer .primary-nav__menu li {
-  border-bottom: 1px solid rgba($color-light, 0.1);
+  border-bottom: 1px solid $color-border;
 
   &:last-child {
     border-bottom: none;
@@ -167,13 +172,13 @@ body.nav-open {
 .primary-nav__drawer .primary-nav__menu a {
   display: block;
   padding: 1rem 0;
-  color: $color-light;
+  color: $color-text;
   font-weight: 600;
   font-size: $font-size-lg;
   text-decoration: none;
 
   &:hover {
-    color: $color-accent;
+    color: var(--bsp-emphasis, $color-emphasis);
     text-decoration: none;
   }
 }
@@ -189,7 +194,7 @@ body.nav-open {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: inherit;
+  color: $color-text;
 
   @media (min-width: $breakpoint-md) {
     display: none;
@@ -209,12 +214,13 @@ body.nav-open {
   min-height: 50vh;
 }
 
-// Site footer
+// Site footer — light grey separation, black text
 .site-footer {
-  background: $color-primary;
-  color: $color-light;
+  background: $color-bg-subtle;
+  color: $color-text;
   padding-block: 2rem;
   margin-top: auto;
+  border-top: 1px solid $color-border;
 }
 
 .site-footer__inner {
@@ -234,7 +240,16 @@ body.nav-open {
   padding: 0;
 }
 
+.footer-nav__menu a {
+  color: $color-text;
+  font-weight: 500;
+
+  &:hover {
+    color: var(--bsp-emphasis, $color-emphasis);
+  }
+}
+
 .site-footer__copyright {
   font-size: $font-size-sm;
-  opacity: 0.9;
+  color: $color-text-muted;
 }

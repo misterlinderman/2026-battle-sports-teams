@@ -55,9 +55,10 @@ function bst_enqueue_assets(): void {
 	$theme_uri = get_template_directory_uri();
 	$version   = BST_THEME_VERSION;
 
+	// Satoshi (Fontshare) — global font for Battle Sports brand
 	wp_enqueue_style(
 		'battle-sports-fonts',
-		'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap',
+		'https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap',
 		array(),
 		null
 	);

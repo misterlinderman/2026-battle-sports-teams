@@ -49,9 +49,12 @@ final class Roles {
             update_option(self::OPTION_ROLES_REGISTERED, true);
         }
 
-        // Grant artwork capabilities to administrators (runs every init, idempotent).
+        // Grant portal and artwork capabilities to administrators (runs every init, idempotent).
         $admin = get_role('administrator');
         if ($admin) {
+            $admin->add_cap('bsp_view_portal');
+            $admin->add_cap('bsp_manage_roster');
+            $admin->add_cap('bsp_submit_order');
             $admin->add_cap('bsp_view_artwork_queue');
             $admin->add_cap('bsp_upload_proof');
             $admin->add_cap('bsp_manage_artwork_queue');

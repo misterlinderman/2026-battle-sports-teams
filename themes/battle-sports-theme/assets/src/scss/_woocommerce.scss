@@ -1,7 +1,6 @@
 @use 'variables' as *;
 @use 'components' as comp;
 
-// WooCommerce overrides — scoped to .woocommerce to avoid global overrides
 .woocommerce {
   a.button,
   button.button,
@@ -15,17 +14,18 @@
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 4px;
-    border-left: 4px solid $color-accent;
-    background: $color-light;
+    border-left: 4px solid var(--bsp-emphasis, $color-emphasis);
+    background: $color-bg-subtle;
+    color: $color-text;
   }
 
   .price {
-    color: $color-accent;
+    color: var(--bsp-emphasis, $color-emphasis);
     font-weight: 600;
   }
 
   .star-rating {
-    color: $color-accent;
+    color: var(--bsp-emphasis, $color-emphasis);
   }
 
   ul.products {

@@ -22,12 +22,18 @@ body {
   font-family: $font-primary;
   font-size: $font-size-base;
   line-height: $line-height-normal;
-  color: $color-dark;
-  background-color: $color-light;
+  letter-spacing: 0rem;
+  color: $color-text;
+  background-color: $color-bg;
+}
+
+h1,
+h2 {
+  text-transform: uppercase;
 }
 
 a {
-  color: $color-accent;
+  color: var(--bsp-emphasis, $color-emphasis);
   text-decoration: none;
 
   &:hover {
@@ -35,7 +41,7 @@ a {
   }
 
   &:focus-visible {
-    outline: 2px solid $color-accent;
+    outline: 2px solid var(--bsp-emphasis, $color-emphasis);
     outline-offset: 2px;
   }
 }

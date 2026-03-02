@@ -1,7 +1,10 @@
 @use 'variables' as *;
 @use 'sass:color';
 
-// Button mixin for reuse in other modules
+// Emphasis color — use CSS var for admin override
+$emphasis: var(--bsp-emphasis, $color-emphasis);
+
+// Button mixin for reuse
 @mixin btn-base {
   display: inline-block;
   padding: 0.5rem 1rem;
@@ -11,20 +14,20 @@
   line-height: $line-height-tight;
   text-align: center;
   text-decoration: none;
-  color: $color-light;
-  background: $color-accent;
+  color: $color-text;
+  background: $emphasis;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 
   &:hover {
-    background: color.adjust($color-accent, $lightness: -8%);
+    filter: brightness(0.95);
     text-decoration: none;
   }
 
   &:focus-visible {
-    outline: 2px solid $color-accent;
+    outline: 2px solid $emphasis;
     outline-offset: 2px;
   }
 }
@@ -35,18 +38,20 @@
 }
 
 .btn--primary {
-  background: $color-primary;
+  background: $color-text;
+  color: $color-bg;
 
   &:hover {
-    background: color.adjust($color-primary, $lightness: 10%);
+    background: $color-charcoal;
+    color: $color-bg;
   }
 }
 
-// Cards
+// Cards — white bg, light border, Shop-style
 .card {
-  background: #fff;
+  background: $color-bg;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba($color-dark, 0.1);
+  border: 1px solid $color-border;
   overflow: hidden;
 }
 
@@ -60,6 +65,7 @@
   margin-bottom: 0.25rem;
   font-weight: 600;
   font-size: $font-size-sm;
+  color: $color-text;
 }
 
 .form__input,
@@ -70,15 +76,14 @@
   font-family: $font-primary;
   font-size: $font-size-base;
   line-height: $line-height-normal;
-  color: $color-dark;
-  background: #fff;
-  border: 1px solid rgba($color-dark, 0.2);
-  border-radius: 4px;
+  color: $color-text;
+  background: $color-bg;
+  border: 1px solid $color-border;
 
   &:focus {
     outline: none;
-    border-color: $color-accent;
-    box-shadow: 0 0 0 2px rgba($color-accent, 0.2);
+    border-color: $emphasis;
+    box-shadow: 0 0 0 2px color.adjust($color-emphasis, $alpha: -0.8);
   }
 }
 
@@ -89,92 +94,87 @@
 
 // ——— Battle Sports Platform (BSP) Components ———
 
-// Hero: full-width with overlay
+// Hero — white/light bg, black text, Shop-style minimal
 .bsp-hero {
   position: relative;
-  min-height: 320px;
+  min-height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, $color-primary 0%, color.adjust($color-primary, $lightness: 15%) 50%, $color-dark 100%);
-  background-size: cover;
-  background-position: center;
+  background: $color-bg-subtle;
+  border-bottom: 1px solid $color-border;
   overflow: hidden;
 
   @media (min-width: $breakpoint-md) {
-    min-height: 400px;
+    min-height: 340px;
   }
 
   @media (min-width: $breakpoint-lg) {
-    min-height: 480px;
+    min-height: 400px;
   }
 }
 
 .bsp-hero__overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba($color-dark, 0.5) 0%,
-    rgba($color-primary, 0.3) 50%,
-    rgba($color-dark, 0.7) 100%
-  );
-  z-index: 1;
+  display: none;
 }
 
 .bsp-hero__content {
   position: relative;
   z-index: 2;
   text-align: center;
-  color: $color-light;
+  color: $color-text;
 }
 
 .bsp-hero__title {
-  font-family: $font-display;
-  font-size: clamp(2.5rem, 8vw, 4.5rem);
-  font-weight: 400;
-  letter-spacing: 0.08em;
+  font-family: $font-primary;
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: 0rem;
   line-height: $line-height-tight;
   text-transform: uppercase;
   margin-bottom: 0.75rem;
-  text-shadow: 0 2px 12px rgba($color-dark, 0.4);
+  color: $color-text;
 }
 
 .bsp-hero__subtitle {
+  font-family: $font-primary;
   font-size: $font-size-lg;
+  font-weight: 400;
   max-width: 36ch;
-  margin-inline: auto 1rem;
-  opacity: 0.95;
+  margin-inline: auto;
+  color: $color-text-muted;
   line-height: $line-height-relaxed;
 }
 
 .bsp-hero__tagline {
-  font-family: $font-display;
+  font-family: $font-primary;
   font-size: $font-size-xl;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0rem;
   text-transform: uppercase;
   margin-top: 1rem;
-  opacity: 0.9;
+  color: $color-charcoal;
 }
 
-// Product card: hover state, image zoom effect
+// Product card — white bg, light border, emphasis CTA
 .bsp-product-card {
-  background: #fff;
+  background: $color-bg;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba($color-dark, 0.08);
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  border: 1px solid $color-border;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
 
   &:hover {
-    box-shadow: 0 12px 32px rgba($color-dark, 0.15);
-    transform: translateY(-4px);
+    box-shadow: 0 4px 20px rgba($color-text, 0.08);
+    border-color: $color-border-strong;
 
     .bsp-product-card__image-wrap {
-      transform: scale(1.05);
+      transform: scale(1.02);
     }
 
     .bsp-product-card__cta {
-      background: color.adjust($color-primary, $lightness: -5%);
+      background: $emphasis;
+      color: $color-text;
     }
   }
 }
@@ -189,7 +189,7 @@
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: linear-gradient(145deg, $color-light 0%, color.adjust($color-primary, $lightness: 30%) 100%);
+  background: $color-bg-subtle;
   transition: transform 0.4s ease;
 }
 
@@ -206,16 +206,16 @@
 .bsp-product-card__image-icon {
   font-size: 2.5rem;
   font-weight: 300;
-  opacity: 0.4;
-  color: $color-primary;
+  opacity: 0.3;
+  color: $color-text;
 }
 
 .bsp-product-card__image-label {
   font-size: $font-size-xs;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0rem;
   opacity: 0.6;
-  color: $color-primary;
+  color: $color-text-muted;
 }
 
 .bsp-product-card__body {
@@ -223,20 +223,22 @@
 }
 
 .bsp-product-card__name {
-  font-family: $font-display;
+  font-family: $font-primary;
   font-size: $font-size-2xl;
-  letter-spacing: 0.05em;
-  color: $color-primary;
+  font-weight: 700;
+  letter-spacing: 0rem;
+  color: $color-text;
   margin-bottom: 0.25rem;
 }
 
 .bsp-product-card__sport {
   display: block;
+  font-family: $font-primary;
   font-size: $font-size-sm;
-  color: $color-accent;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0rem;
+  color: $emphasis;
   margin-bottom: 1rem;
 }
 
@@ -246,14 +248,15 @@
   font-size: $font-size-sm;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: $color-light;
-  background: $color-primary;
+  letter-spacing: 0rem;
+  color: $color-text;
+  background: transparent;
+  border: 2px solid $color-text;
   border-radius: 4px;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-// Color swatches: circular color indicators
+// Color swatches
 .bsp-color-swatches {
   display: flex;
   flex-wrap: wrap;
@@ -267,12 +270,11 @@
   height: 28px;
   border-radius: 50%;
   background: var(--swatch-color, #666);
-  border: 2px solid rgba($color-dark, 0.15);
-  box-shadow: 0 1px 3px rgba($color-dark, 0.2);
+  border: 2px solid $color-border;
   flex-shrink: 0;
 }
 
-// Buttons
+// Buttons — emphasis for primary, charcoal for secondary
 .bsp-btn-primary {
   display: inline-block;
   padding: 0.75rem 1.5rem;
@@ -280,24 +282,24 @@
   font-size: $font-size-base;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0rem;
   text-align: center;
   text-decoration: none;
-  color: $color-light;
-  background: $color-primary;
+  color: $color-text;
+  background: $emphasis;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, filter 0.2s ease;
 
   &:hover {
-    background: color.adjust($color-primary, $lightness: -8%);
-    color: $color-light;
+    filter: brightness(0.95);
+    color: $color-text;
     text-decoration: none;
   }
 
   &:focus-visible {
-    outline: 2px solid $color-primary;
+    outline: 2px solid $emphasis;
     outline-offset: 2px;
   }
 }
@@ -318,9 +320,9 @@
   font-weight: 600;
   text-align: center;
   text-decoration: none;
-  color: $color-primary;
+  color: $color-text;
   background: transparent;
-  border: 2px solid $color-primary;
+  border: 2px solid $color-charcoal;
   border-radius: 4px;
   cursor: pointer;
   margin-top: 0.75rem;
@@ -328,41 +330,41 @@
   transition: background 0.2s ease, color 0.2s ease;
 
   &:hover {
-    background: $color-primary;
-    color: $color-light;
+    background: $color-charcoal;
+    color: $color-bg;
     text-decoration: none;
   }
 
   &:focus-visible {
-    outline: 2px solid $color-accent;
+    outline: 2px solid $emphasis;
     outline-offset: 2px;
   }
 }
 
-// Badge: status badges for artwork queue
+// Badge — status badges
 .bsp-badge {
   display: inline-block;
   padding: 0.25rem 0.6rem;
   font-size: $font-size-xs;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0rem;
   border-radius: 4px;
-  background: rgba($color-dark, 0.1);
-  color: $color-dark;
+  background: $color-bg-subtle;
+  color: $color-text;
+  border: 1px solid $color-border;
 
-  &--pending { background: #fef3c7; color: #92400e; }
-  &--in-progress { background: #dbeafe; color: #1e40af; }
-  &--approved { background: #d1fae5; color: #065f46; }
-  &--complete { background: #e5e7eb; color: #374151; }
+  &--pending { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+  &--in-progress { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+  &--approved { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+  &--complete { background: $color-bg-subtle; color: $color-charcoal; }
 }
 
-// Catalog main: no top padding (hero is full-width)
+// Catalog
 .site-main--catalog {
   padding-block-start: 0;
 }
 
-// Catalog grid: CSS Grid
 .bsp-catalog-grid-section {
   padding-block: 3rem 4rem;
 }
@@ -382,7 +384,7 @@
   }
 }
 
-// Product detail layout
+// Product detail
 .site-main--product-detail {
   padding-block: 2rem 4rem;
 }
@@ -393,26 +395,28 @@
 
 .bsp-product-header__sport {
   display: block;
+  font-family: $font-primary;
   font-size: $font-size-sm;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: $color-accent;
+  letter-spacing: 0rem;
+  color: $emphasis;
   margin-bottom: 0.25rem;
 }
 
 .bsp-product-header__name {
-  font-family: $font-display;
+  font-family: $font-primary;
   font-size: clamp(2rem, 5vw, 3rem);
-  letter-spacing: 0.05em;
-  color: $color-primary;
+  font-weight: 700;
+  letter-spacing: 0rem;
+  color: $color-text;
   margin-bottom: 0.75rem;
 }
 
 .bsp-product-header__description {
   font-size: $font-size-lg;
   line-height: $line-height-relaxed;
-  color: $color-dark;
+  color: $color-text-muted;
   max-width: 50ch;
 }
 
@@ -438,10 +442,11 @@
 
 .bsp-product-gallery__main {
   aspect-ratio: 4 / 3;
-  background: linear-gradient(145deg, $color-light 0%, color.adjust($color-primary, $lightness: 35%) 100%);
+  background: $color-bg-subtle;
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 0.75rem;
+  border: 1px solid $color-border;
 }
 
 .bsp-product-gallery__placeholder {
@@ -456,16 +461,16 @@
 
 .bsp-product-gallery__placeholder-icon {
   font-size: 3rem;
-  opacity: 0.4;
-  color: $color-primary;
+  opacity: 0.3;
+  color: $color-text;
 }
 
 .bsp-product-gallery__placeholder-label {
   font-size: $font-size-sm;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0rem;
   opacity: 0.6;
-  color: $color-primary;
+  color: $color-text-muted;
 }
 
 .bsp-product-gallery__thumbs {
@@ -476,14 +481,14 @@
 .bsp-product-gallery__thumb-placeholder {
   flex: 1;
   aspect-ratio: 1;
-  background: rgba($color-dark, 0.08);
+  background: $color-bg-subtle;
+  border: 1px solid $color-border;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: $font-size-sm;
-  color: $color-primary;
-  opacity: 0.7;
+  color: $color-text-muted;
 }
 
 .bsp-product-info {
@@ -491,18 +496,19 @@
 }
 
 .bsp-product-specs {
-  background: #fff;
+  background: $color-bg;
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 2px 12px rgba($color-dark, 0.08);
+  border: 1px solid $color-border;
   margin-bottom: 1.5rem;
 }
 
 .bsp-product-specs__title {
-  font-family: $font-display;
+  font-family: $font-primary;
   font-size: $font-size-xl;
-  letter-spacing: 0.05em;
-  color: $color-primary;
+  font-weight: 700;
+  letter-spacing: 0rem;
+  color: $color-text;
   margin-bottom: 1rem;
 }
 
@@ -510,14 +516,14 @@
   font-size: $font-size-sm;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: $color-dark;
+  letter-spacing: 0rem;
+  color: $color-text;
   margin-bottom: 0.5rem;
 }
 
 .bsp-product-specs__values {
   font-size: $font-size-base;
-  color: $color-dark;
+  color: $color-text-muted;
   margin-bottom: 1rem;
   line-height: $line-height-normal;
 }

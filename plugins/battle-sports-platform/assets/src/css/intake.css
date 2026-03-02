@@ -1,298 +1,302 @@
 /**
  * Battle Sports Platform — Intake form styles.
- * BEM naming, mobile-first.
+ * Shop-style: white bg, black text, light grey separation, emphasis CTAs.
  */
+
 .bsp-intake {
-    max-width: 36rem;
-    margin: 0 auto;
+  max-width: 36rem;
+  margin: 0 auto;
 }
 
 .bsp-intake__error-notice {
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 0.375rem;
-    color: #b91c1c;
-    font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.375rem;
+  color: #b91c1c;
+  font-size: 0.875rem;
 }
 
 .bsp-intake__progress {
-    margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .bsp-intake__steps {
-    display: flex;
-    gap: 0.5rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .bsp-intake__step-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.5rem 0.25rem;
-    font-size: 0.875rem;
-    color: #6b7280;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
 .bsp-intake__step-item--active {
-    color: #111827;
-    font-weight: 600;
+  color: #000;
+  font-weight: 600;
 }
 
 .bsp-intake__step-item--complete {
-    color: #059669;
+  color: #065f46;
 }
 
 .bsp-intake__step-num {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 50%;
-    background: #e5e7eb;
-    font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #e5e7eb;
+  font-weight: 600;
+  color: #374151;
 }
 
 .bsp-intake__step-item--active .bsp-intake__step-num {
-    background: #111827;
-    color: #fff;
+  background: #000;
+  color: #fff;
 }
 
 .bsp-intake__step-item--complete .bsp-intake__step-num {
-    background: #059669;
-    color: #fff;
+  background: #10b981;
+  color: #fff;
 }
 
 .bsp-intake__step-label {
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 @media (max-width: 479px) {
-    .bsp-intake__step-label {
-        font-size: 0.75rem;
-    }
+  .bsp-intake__step-label {
+    font-size: 0.75rem;
+  }
 }
 
-/* Panes */
 .bsp-intake__panes {
-    position: relative;
+  position: relative;
 }
 
 .bsp-intake__pane {
-    display: none;
+  display: none;
 }
 
 .bsp-intake__pane--active {
-    display: block;
+  display: block;
 }
 
 .bsp-intake__pane[aria-hidden="true"] {
-    display: none;
+  display: none;
 }
 
 .bsp-intake__pane-title {
-    margin: 0 0 1rem;
-    font-size: 1.25rem;
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  color: #000;
 }
 
 .bsp-intake__pane-placeholder {
-    color: #6b7280;
-    font-style: italic;
+  color: #6b7280;
+  font-style: italic;
 }
 
-/* Fields */
 .bsp-intake__fields {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .bsp-intake__row {
-    display: flex;
-    gap: 1rem;
+  display: flex;
+  gap: 1rem;
 }
 
 .bsp-intake__row--split > .bsp-intake__field {
-    flex: 1;
+  flex: 1;
 }
 
 .bsp-intake__row--split-3 > .bsp-intake__field {
-    flex: 1;
-    min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 @media (max-width: 479px) {
-    .bsp-intake__row--split,
-    .bsp-intake__row--split-3 {
-        flex-direction: column;
-    }
+  .bsp-intake__row--split,
+  .bsp-intake__row--split-3 {
+    flex-direction: column;
+  }
 }
 
 .bsp-intake__field {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .bsp-intake__field--error .bsp-intake__input,
 .bsp-intake__field--error .bsp-intake__select {
-    border-color: #dc2626;
+  border-color: #dc2626;
 }
 
 .bsp-intake__label {
-    margin-bottom: 0.25rem;
-    font-weight: 500;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #000;
 }
 
 .bsp-intake__required {
-    color: #dc2626;
+  color: #dc2626;
 }
 
 .bsp-intake__input,
 .bsp-intake__select {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    font-size: 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  background: #fff;
+  color: #000;
 }
 
 .bsp-intake__input:focus,
 .bsp-intake__select:focus,
 .bsp-intake__textarea:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  outline: none;
+  border-color: var(--bsp-emphasis, #ceff00);
+  box-shadow: 0 0 0 2px rgba(206, 255, 0, 0.2);
 }
 
 .bsp-intake__textarea {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    font-size: 1rem;
-    font-family: inherit;
-    resize: vertical;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  background: #fff;
+  color: #000;
 }
 
 .bsp-intake__pricing {
-    margin: 0 0 0.25rem;
-    font-size: 0.875rem;
-    color: #6b7280;
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
 .bsp-intake__error {
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: #dc2626;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #dc2626;
 }
 
 .bsp-intake__fieldset {
-    border: none;
-    margin: 0;
-    padding: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
 }
 
 .bsp-intake__legend {
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #000;
 }
 
-/* Radios */
 .bsp-intake__radios {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
 }
 
 .bsp-intake__radios--colors {
-    gap: 0.5rem 1rem;
+  gap: 0.5rem 1rem;
 }
 
 .bsp-intake__radio-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
 }
 
 .bsp-intake__radio {
-    margin: 0;
+  margin: 0;
 }
 
-/* Conditional */
 .bsp-intake__conditional--hidden {
-    display: none !important;
+  display: none !important;
 }
 
 .bsp-intake__field--conditional[aria-hidden="true"] {
-    display: none !important;
+  display: none !important;
 }
 
-/* File */
 .bsp-intake__file {
-    padding: 0.25rem 0;
+  padding: 0.25rem 0;
 }
 
 .bsp-intake__hint {
-    margin: 0.25rem 0 0;
-    font-size: 0.875rem;
-    color: #6b7280;
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
 .bsp-intake__file-preview {
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-    color: #059669;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #059669;
 }
 
 .bsp-intake__file-preview--error {
-    color: #dc2626;
+  color: #dc2626;
 }
 
-/* Actions */
 .bsp-intake__actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
 }
 
 .bsp-intake__btn {
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    font-weight: 500;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    border: 1px solid #d1d5db;
-    background: #fff;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #000;
 }
 
 .bsp-intake__btn:hover {
-    background: #f9fafb;
+  background: #f9fafb;
 }
 
 .bsp-intake__btn--next,
 .bsp-intake__btn--submit {
-    background: #111827;
-    color: #fff;
-    border-color: #111827;
+  background: var(--bsp-emphasis, #ceff00);
+  color: #000;
+  border-color: var(--bsp-emphasis, #ceff00);
 }
 
 .bsp-intake__btn--next:hover,
 .bsp-intake__btn--submit:hover {
-    background: #1f2937;
+  filter: brightness(0.95);
 }
 
 .bsp-intake__btn[aria-hidden="true"] {
-    display: none;
+  display: none;
 }

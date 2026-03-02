@@ -55,7 +55,6 @@ $approvals_count = count($pending_approvals);
 	</div>
 
 	<?php if (!empty($pending_approvals)) : ?>
-	<style>.bsp-portal-artwork__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem}.bsp-portal-artwork__item{border:1px solid #ddd;border-radius:8px;padding:1rem}.bsp-portal-artwork__thumbnail{max-width:100%;height:auto;display:block;border-radius:4px}.bsp-portal-artwork__actions{display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap}.bsp-portal-artwork__btn{padding:0.4rem 0.8rem;cursor:pointer;border-radius:4px;border:1px solid #ccc}.bsp-portal-artwork__btn--approve{background:#00a32a;color:#fff;border-color:#00a32a}.bsp-portal-artwork__revision-form{margin-top:0.75rem}.bsp-portal-artwork__revision-notes{width:100%;margin-top:0.25rem}.bsp-portal-artwork__revision-buttons{margin-top:0.5rem;display:flex;gap:0.5rem}.bsp-portal-artwork__message--error{color:#b32d2e}</style>
 	<div class="bsp-portal-artwork bsp-portal__section" data-empty-text="<?php echo esc_attr(__('No artwork pending approval.', 'battle-sports-platform')); ?>">
 		<h2 class="bsp-portal__section-title"><?php esc_html_e('My Artwork', 'battle-sports-platform'); ?></h2>
 		<p class="bsp-portal__section-desc"><?php esc_html_e('Review proofs and approve or request revisions.', 'battle-sports-platform'); ?></p>
